@@ -78,7 +78,7 @@ const Tickets: React.FC = () => {
   const [triggerStatus, { isLoading: statusLoading }] = useCommanApiMutation();
   const [sortOrder, setSortOrder] = useState("desc");
   const [sortType, setSortType] = useState<string | null>(null);
-  const { filtersOpen, setFiltersOpen } = useTicketsLayout();
+  const { filtersOpen, setFiltersOpen, addTicketTab } = useTicketsLayout();
   // Sorting popover state
   const [sortingPopoverAnchorEl, setSortingPopoverAnchorEl] =
     useState<HTMLElement | null>(null);
@@ -372,9 +372,20 @@ const Tickets: React.FC = () => {
     setUserPopupUser(null);
   };
 
-  // When a ticket is opened, update the URL
-  const handleTicketSubjectClick = (ticketNumber: string) => {
-    navigate(`/tickets/${ticketNumber}`);
+  // When a ticket is opened, update tabs and navigate to detail view
+  const handleTicketSubjectClick = (ticket: any) => {
+    if (!ticket?.ticketNumber) return;
+    addTicketTab({
+      ticketNumber: String(ticket.ticketNumber),
+      subject: ticket.subject || ticket.topic || "Untitled ticket",
+      requester:
+        ticket?.fromUser?.name ||
+        ticket?.requester?.name ||
+        ticket?.assignee?.name ||
+        "",
+      status: ticket?.status?.name,
+    });
+    navigate(`/tickets/${ticket.ticketNumber}`);
   };
 
   React.useEffect(() => {
@@ -725,7 +736,7 @@ const Tickets: React.FC = () => {
       <div
         key={merged?.ticketNumber}
         className="w-full min-w-[300px]  bg-white border-2 border-[#e8eaec] rounded-xl mb-4 p-4 hover:shadow-lg transition-shadow duration-200 cursor-pointer relative hover:bg-[#f6f8fb]"
-        onClick={() => handleTicketSubjectClick(merged.ticketNumber)}
+        onClick={() => handleTicketSubjectClick(merged)}
       >
         {/* Top section */}
         <div className="flex gap-4 mb-3">

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Box, Grow, Zoom } from "@mui/material";
 import { Apps, AddTask, More } from "@mui/icons-material";
 import CustomSideBarPanel from "../../../components/reusable/CustomSideBarPanel";
@@ -30,12 +30,15 @@ import { useGetTicketListQuery } from "../../../services/ticketAuth";
 import { AnimatePresence, motion } from "framer-motion";
 import MoreOptionsPage from "../../../components/MoreOptionsPage";
 import DrawerTask from "../drawerTask/DrawerTask";
+import { useTicketsLayout } from "../../../contextApi/TicketsLayoutContext";
 
 const TicketDetailTemplate = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const dispatch = useDispatch();
   const { showToast } = useToast();
+  const { addTicketTab, updateTicketTab, setActiveTicketTab } =
+    useTicketsLayout();
   const openTicketNumber = useParams().id;
   const [openMoreOptions, setOpenMoreOptions] = useState(false);
   const handleMoreClose = () => {
@@ -72,12 +75,18 @@ const TicketDetailTemplate = () => {
   const handlePreviousTicket = () => {
     if (!hasPreviousTicket) return;
     const prevId = ticketIds[currentIndex - 1];
-    if (prevId) navigate(`/tickets/${prevId}`);
+    if (prevId) {
+      addTicketTab({ ticketNumber: prevId });
+      navigate(`/tickets/${prevId}`);
+    }
   };
   const handleNextTicket = () => {
     if (!hasNextTicket) return;
     const nextId = ticketIds[currentIndex + 1];
-    if (nextId) navigate(`/tickets/${nextId}`);
+    if (nextId) {
+      addTicketTab({ ticketNumber: nextId });
+      navigate(`/tickets/${nextId}`);
+    }
   };
 
   const [forwardOpen, setForwardOpen] = React.useState(false);
@@ -263,20 +272,45 @@ const TicketDetailTemplate = () => {
     }
   };
 
+  useEffect(() => {
+    if (openTicketNumber) {
+      const ticketNumber = String(openTicketNumber);
+      addTicketTab({ ticketNumber });
+      setActiveTicketTab(ticketNumber);
+    }
+  }, [openTicketNumber, addTicketTab, setActiveTicketTab]);
+
+  useEffect(() => {
+    if (ticket?.header?.ticketNumber) {
+      updateTicketTab(String(ticket.header.ticketNumber), {
+        subject: ticket.header.subject,
+        requester: ticket.header.requester,
+        status: ticket.header.status,
+      });
+    }
+  }, [
+    ticket?.header?.ticketNumber,
+    ticket?.header?.subject,
+    ticket?.header?.requester,
+    ticket?.header?.status,
+    updateTicketTab,
+  ]);
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        position: "relative",
-        overflow: "hidden",
-        height: "calc(100vh - 98px)",
-      }}
-    >
-      <Sidebar open={false} handleDrawerToggle={() => {}} />
+    <>
       <Box
-        id="ticket-header"
-        sx={{ flex: 1, display: "flex", flexDirection: "column" }}
+        sx={{
+          display: "flex",
+          position: "relative",
+          overflow: "hidden",
+          height: "calc(100vh - 98px)",
+        }}
       >
+        <Sidebar open={false} handleDrawerToggle={() => {}} />
+        <Box
+          id="ticket-header"
+          sx={{ flex: 1, display: "flex", flexDirection: "column" }}
+        >
         <div className="sticky top-0 z-[99]">
           <TicketDetailHeader
             ticket={displayHeader}
@@ -827,6 +861,7 @@ const TicketDetailTemplate = () => {
         <DrawerTask isAddTask={isAddTask} ticketId={ticket?.header?.ticketId} />
       </CustomSideBarPanel>
     </Box>
+    </>
   );
 };
 

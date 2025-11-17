@@ -21,6 +21,7 @@ import { useGetUserIsAvailableQuery } from "../../services/auth";
 import { useAuth } from "../../contextApi/AuthContext";
 import { setStartTime } from "../../reduxStore/Slices/setUpSlices";
 import LeftMenu from "../../USERMODULE/pages/TicketManagement/LeftMenu";
+import TicketTabsBar from "../../USERMODULE/pages/TicketManagement/TicketTabsBar";
 import UserLeftMenu from "../../USERMODULE/pages/UserManagement/UserLeftMenu";
 import GlobalBackButtonPrevention from "../GlobalBackButtonPrevention";
 import { TicketsLayoutProvider } from "../../contextApi/TicketsLayoutContext";
@@ -151,6 +152,7 @@ const MainLayout = () => {
             helpCenterOpen={helpCenterOpen}
             sx={{ position: "relative" }}
           >
+            <TicketTabsBar />
             <MainContent className="custom-scrollbar">
               <Suspense
                 fallback={
