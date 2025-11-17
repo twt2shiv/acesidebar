@@ -103,21 +103,6 @@ const HelperTextWithIcon = ({ message }: { message: string }) => (
   </Box>
 );
 
-// Animation styles for step content transition
-const stepContentAnimation = {
-  "@keyframes slideDown": {
-    "0%": {
-      opacity: 0,
-      transform: "translateY(-20px)",
-    },
-    "100%": {
-      opacity: 1,
-      transform: "translateY(0)",
-    },
-  },
-  animation: "slideDown 0.4s ease-out",
-};
-
 const signUpSchema = z.object({
   email: z
     .string({ required_error: "Email is required" })
@@ -774,8 +759,7 @@ const AdminSignupScreen = () => {
               gap: 4,
               justifyContent: "center",
               overflowY: { md: "auto" },
-              maxHeight: { md: "100vh" },
-              ...stepContentAnimation,
+              maxHeight: { md: "100vh" }
             }}
           >
             <Box>
@@ -951,8 +935,7 @@ const AdminSignupScreen = () => {
               gap: 4,
               justifyContent: "center",
               overflowY: { md: "auto" },
-              maxHeight: { md: "100vh" },
-              ...stepContentAnimation,
+              maxHeight: { md: "100vh" }
             }}
           >
             <Box>
@@ -1099,8 +1082,7 @@ const AdminSignupScreen = () => {
               gap: 4,
               justifyContent: "center",
               overflowY: { md: "auto" },
-              maxHeight: { md: "100vh" },
-              ...stepContentAnimation,
+              maxHeight: { md: "100vh" }
             }}
           >
             <Box>
@@ -1244,8 +1226,7 @@ const AdminSignupScreen = () => {
                 gap: 3,
                 justifyContent: "center",
                 alignItems: "flex-start",
-                textAlign: "left",
-                ...stepContentAnimation,
+                textAlign: "left"
               }}
             >
               <Typography
@@ -1310,8 +1291,7 @@ const AdminSignupScreen = () => {
                 gap: 4,
                 justifyContent: "center",
                 overflowY: { md: "auto" },
-                maxHeight: { md: "100vh" },
-                ...stepContentAnimation,
+                maxHeight: { md: "100vh" }
               }}
             >
               <Box>
