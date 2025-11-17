@@ -1124,6 +1124,7 @@ const AdminSignupScreen = () => {
             <TextField
               {...registerPersonal("fullName")}
               fullWidth
+              placeholder="Enter your full name"
               error={!!personalErrors.fullName}
               helperText={
                 personalErrors.fullName?.message || (
@@ -1200,6 +1201,7 @@ const AdminSignupScreen = () => {
             <TextField
               {...registerPersonal("organizationName")}
               fullWidth
+              placeholder="Enter your organization name"
               error={!!personalErrors.organizationName}
               helperText={
                 personalErrors.organizationName?.message || (
