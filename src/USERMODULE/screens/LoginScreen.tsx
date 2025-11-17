@@ -36,7 +36,7 @@ import SecureLoginImage from "../../assets/image/login/secure-login-i1.jpg";
 import GoogleRecaptcha, {
   GoogleRecaptchaRef,
 } from "../../components/reusable/GoogleRecaptcha";
-// import { sessionManager } from "../../utils/SessionManager";
+import { sessionManager } from "../../utils/SessionManager";
 
 type RegisterFormData = z.infer<typeof loginSchema>;
 
@@ -282,14 +282,14 @@ const LoginScreen = () => {
   // Generate session ID when component mounts (when someone visits login page)
   useEffect(() => {
     // Create a new session when someone visits the login page
-    // const session = sessionManager.createSession();
+    const session = sessionManager.createSession();
     // console.log("Login page visited - Session created:", session.sessionId);
 
-    // // Cleanup function to stop session checking when component unmounts
-    // return () => {
-    //   // Don't clear session here as user might navigate away temporarily
-    //   // Session will be managed by SessionManager
-    // };
+    // Cleanup function to stop session checking when component unmounts
+    return () => {
+      // Don't clear session here as user might navigate away temporarily
+      // Session will be managed by SessionManager
+    };
   }, []);
 
   const forgotSchema = z.object({
@@ -319,10 +319,10 @@ const LoginScreen = () => {
       return;
     }
 
-    // const isSessionValid = sessionManager.checkSessionExpiration();
-    // if (!isSessionValid) {
-    //   return;
-    // }
+    const isSessionValid = sessionManager.checkSessionExpiration();
+    if (!isSessionValid) {
+      return;
+    }
 
     try {
       const payload = {
@@ -561,7 +561,7 @@ const LoginScreen = () => {
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
-          backgroundColor: "#ffffff",
+        backgroundColor: "#ffffff",
       }}
     >
       <Box
@@ -577,12 +577,12 @@ const LoginScreen = () => {
           alignItems: "stretch",
         }}
       >
-          <Box
-            sx={{
+        <Box
+          sx={{
             width: { xs: "100%", md: "50%" },
             py: { xs: 6, md: 8 },
-              display: "flex",
-              justifyContent: "center",
+            display: "flex",
+            justifyContent: "center",
             alignItems: "center",
           }}
         >
@@ -982,252 +982,252 @@ const LoginScreen = () => {
                   </Box>
                 ) : (
                   <Box component="form" onSubmit={handleLoginAttempt} noValidate>
-                      <TextField
-                        {...register("email")}
-                        fullWidth
-                        variant="outlined"
+                    <TextField
+                      {...register("email")}
+                      fullWidth
+                      variant="outlined"
                       label="Workspace username or email"
-                        sx={{
-                          mb: 2,
-                          "& .MuiOutlinedInput-root": {
+                      sx={{
+                        mb: 2,
+                        "& .MuiOutlinedInput-root": {
                           borderRadius: "12px",
-                            fontSize: "16px",
-                            "& fieldset": {
+                          fontSize: "16px",
+                          "& fieldset": {
                             borderColor: NEUTRAL_BORDER,
-                            },
-                            "&:hover fieldset": {
-                            borderColor: PRIMARY_COLOR,
-                            },
-                            "&.Mui-focused fieldset": {
-                            borderColor: PRIMARY_COLOR,
-                            },
                           },
-                        }}
-                        InputLabelProps={{
-                          sx: {
-                            fontSize: "14px",
-                            color: "#1a1a1a",
-                          },
-                        }}
-                        autoComplete="email"
-                        error={
-                          isSubmitted || touchedFields.email
-                            ? !!errors.email
-                            : false
-                        }
-                      />
-
-                      <TextField
-                        {...register("password")}
-                        fullWidth
-                        variant="outlined"
-                      label="Workspace password"
-                        type={showPassword ? "text" : "password"}
-                        sx={{
-                          mb: 2,
-                          "& .MuiOutlinedInput-root": {
-                          borderRadius: "12px",
-                            fontSize: "16px",
-                            "& fieldset": {
-                            borderColor: NEUTRAL_BORDER,
-                            },
-                            "&:hover fieldset": {
+                          "&:hover fieldset": {
                             borderColor: PRIMARY_COLOR,
-                            },
-                            "&.Mui-focused fieldset": {
+                          },
+                          "&.Mui-focused fieldset": {
                             borderColor: PRIMARY_COLOR,
-                            },
                           },
-                        }}
-                        InputLabelProps={{
-                          sx: {
-                            fontSize: "14px",
-                            color: "#1a1a1a",
-                          },
-                        }}
-                        InputProps={{
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <IconButton
-                                aria-label="toggle password visibility"
-                                onClick={handleToggleVisibility}
-                                edge="end"
-                              sx={{ color: "#5f6368" }}
-                              >
-                                {showPassword ? (
-                                  <VisibilityOffIcon />
-                                ) : (
-                                  <VisibilityIcon />
-                                )}
-                              </IconButton>
-                            </InputAdornment>
-                          ),
-                        }}
-                        autoComplete="current-password"
-                        error={
-                          isSubmitted || touchedFields.password
-                            ? !!errors.password
-                            : false
-                        }
-                      />
-
-                      {VISIBLE_RECAPTCHA_KEY ? (
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "center",
-                            mt: 1,
-                            mb: 2,
-                          }}
-                        >
-                          <GoogleRecaptcha
-                            ref={recaptchaRef}
-                            siteKey={VISIBLE_RECAPTCHA_KEY}
-                            onVerify={handleRecaptchaVerify}
-                            onError={handleRecaptchaError}
-                            onExpire={handleRecaptchaExpire}
-                            theme="light"
-                            size="normal"
-                          />
-                        </Box>
-                      ) : (
-                        <Typography
-                          variant="body2"
-                          sx={{ color: "error.main", p: 2 }}
-                        >
-                          Visible reCAPTCHA site key not configured
-                        </Typography>
-                      )}
-
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={termsAccepted}
-                            onChange={(e) => setTermsAccepted(e.target.checked)}
-                            sx={{
-                            color: PRIMARY_COLOR,
-                              "&.Mui-checked": {
-                              color: PRIMARY_COLOR,
-                              },
-                            }}
-                          />
-                        }
-                        label={
-                          <Typography
-                            variant="body2"
-                            sx={{ fontSize: "14px", color: "#1a1a1a" }}
-                          >
-                          I agree to the{" "} <Link href="#" target="_blank" underline="none" rel="noopener noreferrer" sx={{ "&:hover": { textDecoration: "underline" } }}>Terms of Service</Link> and <Link href="#" target="_blank" underline="none" rel="noopener noreferrer" sx={{ "&:hover": { textDecoration: "underline" } }}>Privacy Policy</Link>
-                          </Typography>
-                        }
+                        },
+                      }}
+                      InputLabelProps={{
+                        sx: {
+                          fontSize: "14px",
+                          color: "#1a1a1a",
+                        },
+                      }}
+                      autoComplete="email"
+                      error={
+                        isSubmitted || touchedFields.email
+                          ? !!errors.email
+                          : false
+                      }
                     />
 
+                    <TextField
+                      {...register("password")}
+                      fullWidth
+                      variant="outlined"
+                      label="Workspace password"
+                      type={showPassword ? "text" : "password"}
+                      sx={{
+                        mb: 2,
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "12px",
+                          fontSize: "16px",
+                          "& fieldset": {
+                            borderColor: NEUTRAL_BORDER,
+                          },
+                          "&:hover fieldset": {
+                            borderColor: PRIMARY_COLOR,
+                          },
+                          "&.Mui-focused fieldset": {
+                            borderColor: PRIMARY_COLOR,
+                          },
+                        },
+                      }}
+                      InputLabelProps={{
+                        sx: {
+                          fontSize: "14px",
+                          color: "#1a1a1a",
+                        },
+                      }}
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label="toggle password visibility"
+                              onClick={handleToggleVisibility}
+                              edge="end"
+                              sx={{ color: "#5f6368" }}
+                            >
+                              {showPassword ? (
+                                <VisibilityOffIcon />
+                              ) : (
+                                <VisibilityIcon />
+                              )}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                      autoComplete="current-password"
+                      error={
+                        isSubmitted || touchedFields.password
+                          ? !!errors.password
+                          : false
+                      }
+                    />
+
+                    {VISIBLE_RECAPTCHA_KEY ? (
                       <Box
                         sx={{
                           display: "flex",
-                          gap: 2,
-                          alignItems: "center",
-                        mb: 3,
+                          justifyContent: "center",
+                          mt: 1,
+                          mb: 2,
                         }}
                       >
-                        <IconButton
-                          onClick={handleGoBack}
-                          sx={{
-                          color: PRIMARY_COLOR,
-                            padding: "8px",
-                          border: `1px solid ${NEUTRAL_BORDER}`,
-                            backgroundColor: "#ffffff",
-                          borderRadius: "12px",
-                            flexShrink: 0,
-                            "&:hover": {
-                              backgroundColor: "rgba(37, 103, 179, 0.08)",
-                            borderColor: PRIMARY_COLOR,
-                            },
-                          }}
-                        >
-                          <ArrowBackIcon sx={{ fontSize: 24 }} />
-                        </IconButton>
-
-                        <Button
-                          variant="contained"
-                          disabled={!isFormValid || isLoading}
-                          sx={{
-                            flex: 1,
-                            py: 1.5,
-                            borderRadius: "999px",
-                            textTransform: "none",
-                            fontSize: "16px",
-                            fontWeight: 600,
-                            backgroundColor: PRIMARY_COLOR,
-                            color: "#ffffff",
-                            "&:hover": {
-                              backgroundColor: "#1e4d8a",
-                            },
-                            "&:disabled": {
-                              backgroundColor: "#f3f4f6",
-                              color: "#9e9e9e",
-                            },
-                          }}
-                          type="submit"
-                        >
-                          {isLoading ? (
-                            <CircularProgress size={20} sx={{ color: "white" }} />
-                          ) : (
-                            "Sign in"
-                          )}
-                        </Button>
+                        <GoogleRecaptcha
+                          ref={recaptchaRef}
+                          siteKey={VISIBLE_RECAPTCHA_KEY}
+                          onVerify={handleRecaptchaVerify}
+                          onError={handleRecaptchaError}
+                          onExpire={handleRecaptchaExpire}
+                          theme="light"
+                          size="normal"
+                        />
                       </Box>
+                    ) : (
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "error.main", p: 2 }}
+                      >
+                        Visible reCAPTCHA site key not configured
+                      </Typography>
+                    )}
 
-                      <Box
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={termsAccepted}
+                          onChange={(e) => setTermsAccepted(e.target.checked)}
+                          sx={{
+                            color: PRIMARY_COLOR,
+                            "&.Mui-checked": {
+                              color: PRIMARY_COLOR,
+                            },
+                          }}
+                        />
+                      }
+                      label={
+                        <Typography
+                          variant="body2"
+                          sx={{ fontSize: "14px", color: "#1a1a1a" }}
+                        >
+                          I agree to the{" "} <Link href="#" target="_blank" underline="none" rel="noopener noreferrer" sx={{ "&:hover": { textDecoration: "underline" } }}>Terms of Service</Link> and <Link href="#" target="_blank" underline="none" rel="noopener noreferrer" sx={{ "&:hover": { textDecoration: "underline" } }}>Privacy Policy</Link>
+                        </Typography>
+                      }
+                    />
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        gap: 2,
+                        alignItems: "center",
+                        mb: 3,
+                      }}
+                    >
+                      <IconButton
+                        onClick={handleGoBack}
                         sx={{
-                          display: "flex",
-                          gap: 2,
-                          flexWrap: "wrap",
+                          color: PRIMARY_COLOR,
+                          padding: "8px",
+                          border: `1px solid ${NEUTRAL_BORDER}`,
+                          backgroundColor: "#ffffff",
+                          borderRadius: "12px",
+                          flexShrink: 0,
+                          "&:hover": {
+                            backgroundColor: "rgba(37, 103, 179, 0.08)",
+                            borderColor: PRIMARY_COLOR,
+                          },
+                        }}
+                      >
+                        <ArrowBackIcon sx={{ fontSize: 24 }} />
+                      </IconButton>
+
+                      <Button
+                        variant="contained"
+                        disabled={!isFormValid || isLoading}
+                        sx={{
+                          flex: 1,
+                          py: 1.5,
+                          borderRadius: "999px",
+                          textTransform: "none",
+                          fontSize: "16px",
+                          fontWeight: 600,
+                          backgroundColor: PRIMARY_COLOR,
+                          color: "#ffffff",
+                          "&:hover": {
+                            backgroundColor: "#1e4d8a",
+                          },
+                          "&:disabled": {
+                            backgroundColor: "#f3f4f6",
+                            color: "#9e9e9e",
+                          },
+                        }}
+                        type="submit"
+                      >
+                        {isLoading ? (
+                          <CircularProgress size={20} sx={{ color: "white" }} />
+                        ) : (
+                          "Sign in"
+                        )}
+                      </Button>
+                    </Box>
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        gap: 2,
+                        flexWrap: "wrap",
                         alignItems: "center",
                         color: "#5f6368",
                         fontSize: "14px",
+                      }}
+                    >
+                      <Link
+                        component="button"
+                        underline="none"
+                        sx={{
+                          color: LINK_COLOR,
+                          fontWeight: 600,
+                          "&:hover": { textDecoration: "underline" },
+                        }}
+                        onClick={() => {
+                          setForgotMode("username");
+                          setIsForgot(true);
                         }}
                       >
-                        <Link
-                          component="button"
-                          underline="none"
-                          sx={{
-                            color: LINK_COLOR,
-                            fontWeight: 600,
-                            "&:hover": { textDecoration: "underline" },
-                          }}
-                          onClick={() => {
-                            setForgotMode("username");
-                            setIsForgot(true);
-                          }}
-                        >
-                          Forgot workspace username?
-                        </Link>
+                        Forgot workspace username?
+                      </Link>
                       <Typography component="span" sx={{ color: "#d0d0d0" }}>
                         |
                       </Typography>
-                        <Link
-                          component="button"
-                          underline="none"
-                          sx={{
-                            color: LINK_COLOR,
-                            fontWeight: 600,
-                            "&:hover": { textDecoration: "underline" },
-                          }}
-                          onClick={() => {
-                            setForgotMode("password");
-                            setIsForgot(true);
-                          }}
-                        >
-                          Forgot password?
-                        </Link>
-                      </Box>
+                      <Link
+                        component="button"
+                        underline="none"
+                        sx={{
+                          color: LINK_COLOR,
+                          fontWeight: 600,
+                          "&:hover": { textDecoration: "underline" },
+                        }}
+                        onClick={() => {
+                          setForgotMode("password");
+                          setIsForgot(true);
+                        }}
+                      >
+                        Forgot password?
+                      </Link>
                     </Box>
-                  )}
-                </Box>
-              )}
-            </Box>
+                  </Box>
+                )}
+              </Box>
+            )}
           </Box>
+        </Box>
 
         <Box
           sx={{
