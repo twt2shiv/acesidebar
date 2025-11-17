@@ -31,6 +31,9 @@ interface TicketsLayoutContextType {
 
 const TicketsLayoutContext = createContext<TicketsLayoutContextType | undefined>(undefined);
 
+// Maximum number of tabs allowed
+const MAX_TABS = 15;
+
 export const TicketsLayoutProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [leftMenuExpanded, setLeftMenuExpanded] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(true);
@@ -58,14 +61,32 @@ export const TicketsLayoutProvider: React.FC<{ children: ReactNode }> = ({ child
         (item) => item.ticketNumber === tab.ticketNumber
       );
       if (exists) {
+        // If tab already exists, just update it and make it active
         return prev.map((item) =>
           item.ticketNumber === tab.ticketNumber ? { ...item, ...tab } : item
         );
       }
+      
+      // Check if we've reached the maximum number of tabs
+      if (prev.length >= MAX_TABS) {
+        // Remove the oldest tab (first in array) and add the new one
+        const oldestTab = prev[0];
+        const newTabs = [...prev.slice(1), tab];
+        
+        // If the oldest tab being removed was active, set the new tab as active
+        // Otherwise, the active tab state will be set below
+        if (activeTicketTab === oldestTab.ticketNumber) {
+          setActiveTicketTab(tab.ticketNumber);
+        }
+        
+        return newTabs;
+      }
+      
+      // Add new tab if under limit
       return [...prev, tab];
     });
     setActiveTicketTab(tab.ticketNumber);
-  }, []);
+  }, [activeTicketTab]);
 
   const removeTicketTab = useCallback((ticketNumber: string) => {
     setTicketTabs((prev) => {
