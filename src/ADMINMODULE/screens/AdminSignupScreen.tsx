@@ -49,6 +49,7 @@ import {
   useAdminSignUpMutation,
   useAdminSignUpOtpVerifyMutation,
   useCreateAdminAccountMutation,
+  useRedirectAdminAccountMutation,
 } from "../../services/auth";
 import { useToast } from "../../hooks/useToast";
 
@@ -216,6 +217,7 @@ const AdminSignupScreen = () => {
   const [isCaptchaVerified, setIsCaptchaVerified] = useState<boolean>(false);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [isSignupComplete, setIsSignupComplete] = useState<boolean>(false);
+
   const [submittedEmail, setSubmittedEmail] = useState<string>("");
   const [otpDigits, setOtpDigits] = useState<string[]>(
     Array(OTP_LENGTH).fill("")
@@ -246,31 +248,31 @@ const AdminSignupScreen = () => {
     useAdminSignUpOtpVerifyMutation();
   const [createAdminAccount, { isLoading: createAdminAccountLoading }] =
     useCreateAdminAccountMutation();
+  const [redirectAdminAccount, { isLoading: redirectAdminAccountLoading }] =
+    useRedirectAdminAccountMutation();
 
   const handleCheckSteps = () => {
-    const refId = localStorage.getItem("refId");
-    if (!refId) {
+    const ref = JSON.parse(localStorage.getItem("refId") as string);
+
+    if (!ref) {
       return;
     }
 
     const payload = {
-      url: "check-redirect",
-      body: {
-        ref: refId,
-      },
+      ref: ref,
     };
-    adminSignUp(payload).then((res: any) => {
-      if (res?.success) {
-        const s = res?.data?.step;
+    redirectAdminAccount(payload).then((res: any) => {
+      console.log(res);
+      if (res?.data?.type === "redirect") {
+        const s = res?.data?.data?.step;
         setStep(s);
-        localStorage.setItem("refId", res?.data?.ref);
       }
     });
   };
 
-  // useEffect(() => {
-  //   handleCheckSteps();
-  // }, []);
+  useEffect(() => {
+    handleCheckSteps();
+  }, []);
 
   useEffect(() => {
     if (!hasAcceptedTerms && step === 1) {
@@ -379,7 +381,7 @@ const AdminSignupScreen = () => {
         setStep(s);
         const refId = JSON.stringify(res?.data?.data?.ref);
         localStorage.setItem("refId", refId);
-        setSubmittedEmail(res?.data?.email);
+        setSubmittedEmail(res?.data?.data?.email);
         setResendTimer(0);
 
         resetForms();
@@ -413,7 +415,6 @@ const AdminSignupScreen = () => {
   };
 
   const onPersonalInfoSubmit = (values: PersonalInfoFormValues) => {
-    console.log("onPersonalInfoSubmit", values);
     const ref = JSON.parse(localStorage.getItem("refId") as string);
     if (!ref || ref === undefined) {
       showToast("Invalid  ref", "error");
@@ -421,23 +422,30 @@ const AdminSignupScreen = () => {
     }
     const payload = {
       param: {
-        ref,
-        email: submittedEmail,
+        type: "info",
+        ref: ref,
       },
       body: {
         email: submittedEmail,
-        // otp: otpValue,
+        name: values.fullName,
+        gender:
+          values.gender === "male"
+            ? "M"
+            : values?.gender === "female"
+            ? "F"
+            : "O",
+        org: values.organizationName,
       },
     };
 
-    adminSignUpOtpVerify(payload).then((res: any) => {
+    createAdminAccount(payload).then((res: any) => {
       if (res?.data?.success) {
         const s = res?.data?.data?.step;
         setStep(s);
         const refId = JSON.stringify(res?.data?.data?.ref);
         localStorage.setItem("refId", refId);
-        setSubmittedEmail(res?.data?.email);
-        setResendTimer(0);
+        setSubmittedEmail(res?.data?.data?.email);
+        setPersonalInfo(values);
 
         resetForms();
       }
@@ -446,21 +454,43 @@ const AdminSignupScreen = () => {
         return;
       }
     });
-    // setPersonalInfo(values);
-    // setStep(4);
   };
 
   const onOrganizationSubmit = (values: OrganizationFormValues) => {
-    const workspaceUrl = values.tenantDomain
-      ? `${values.tenantDomain}.${baseDomain}`
-      : baseDomain;
-    console.log("Collected admin signup details", {
-      email: submittedEmail,
-      personal: personalInfo,
-      organization: values,
-      workspaceUrl,
+    const ref = JSON.parse(localStorage.getItem("refId") as string);
+    if (!ref || ref === undefined) {
+      showToast("Invalid  ref", "error");
+      return;
+    }
+
+    const payload = {
+      param: {
+        type: "tenant",
+        ref: ref,
+      },
+      body: {
+        email: submittedEmail || "",
+        name: personalInfo?.fullName,
+        gender:
+          personalInfo?.gender === "male"
+            ? "M"
+            : personalInfo?.gender === "female"
+            ? "F"
+            : "O",
+        tenant: values.tenantDomain,
+      },
+    };
+
+    createAdminAccount(payload).then((res: any) => {
+      if (res?.data?.success) {
+        showToast(res?.data?.message, "success");
+        setIsSignupComplete(true);
+      }
+      if (res?.data?.type === "error") {
+        showToast(res?.data?.message, "error");
+        return;
+      }
     });
-    setIsSignupComplete(true);
   };
 
   const handleBackToPersonal = () => {
@@ -776,7 +806,11 @@ const AdminSignupScreen = () => {
                 with responsive, always-on support.
               </Typography>
               <Typography
-                sx={{ mt: 1.5, color: "#5f6c86", fontSize: { xs: 14, md: 16 } }}
+                sx={{
+                  mt: 1.5,
+                  color: "#5f6c86",
+                  fontSize: { xs: 14, md: 16 },
+                }}
               >
                 Already have an account?{" "}
                 <Link
@@ -805,6 +839,7 @@ const AdminSignupScreen = () => {
               fullWidth
               type="email"
               error={isEmailInvalid}
+              disabled={signupLoading}
               helperText={
                 isEmailInvalid ? (
                   errors.email?.message
@@ -813,7 +848,11 @@ const AdminSignupScreen = () => {
                 )
               }
               FormHelperTextProps={{
-                sx: { marginLeft: 0, display: "flex", alignItems: "center" },
+                sx: {
+                  marginLeft: 0,
+                  display: "flex",
+                  alignItems: "center",
+                },
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
@@ -838,6 +877,7 @@ const AdminSignupScreen = () => {
                   onChange={(event) =>
                     setHasAcceptedTerms(event.target.checked)
                   }
+                  disabled={signupLoading}
                   sx={{
                     color: PRIMARY_COLOR,
                     "&.Mui-checked": {
@@ -1007,6 +1047,7 @@ const AdminSignupScreen = () => {
                     otpInputRefs.current[index] = element;
                   }}
                   autoFocus={index === 0}
+                  disabled={otpVerifyLoading}
                   variant="outlined"
                   inputProps={{
                     maxLength: 1,
@@ -1043,7 +1084,7 @@ const AdminSignupScreen = () => {
                 type="button"
                 variant="text"
                 onClick={handleResendCode}
-                disabled={!canResend}
+                disabled={!canResend || otpVerifyLoading}
                 sx={{
                   fontWeight: 600,
                   color: canResend ? PRIMARY_COLOR : "#9ca3af",
@@ -1105,7 +1146,11 @@ const AdminSignupScreen = () => {
                 Tell us about yourself.
               </Typography>
               <Typography
-                sx={{ mt: 1.5, color: "#5f6c86", fontSize: { xs: 14, md: 16 } }}
+                sx={{
+                  mt: 1.5,
+                  color: "#5f6c86",
+                  fontSize: { xs: 14, md: 16 },
+                }}
               >
                 Share your details so we can personalize your admin workspace.
               </Typography>
@@ -1116,6 +1161,7 @@ const AdminSignupScreen = () => {
               fullWidth
               placeholder="Enter your full name"
               error={!!personalErrors.fullName}
+              disabled={createAdminAccountLoading}
               helperText={
                 personalErrors.fullName?.message || (
                   <HelperTextWithIcon message="Cannot be changed later" />
@@ -1132,11 +1178,17 @@ const AdminSignupScreen = () => {
                 let value = e.target.value.replace(/[^A-Za-z\s]/g, "");
                 // Prevent multiple consecutive spaces
                 value = value.replace(/\s+/g, " ");
-                setPersonalValue("fullName", value, { shouldValidate: true });
+                setPersonalValue("fullName", value, {
+                  shouldValidate: true,
+                });
               }}
             />
 
-            <FormControl component="fieldset" error={!!personalErrors.gender}>
+            <FormControl
+              component="fieldset"
+              error={!!personalErrors.gender}
+              disabled={createAdminAccountLoading}
+            >
               <FormLabel component="legend">Gender</FormLabel>
               <RadioGroup
                 row
@@ -1193,6 +1245,7 @@ const AdminSignupScreen = () => {
               fullWidth
               placeholder="Enter your organization name"
               error={!!personalErrors.organizationName}
+              disabled={createAdminAccountLoading}
               helperText={
                 personalErrors.organizationName?.message || (
                   <HelperTextWithIcon message="Organization name cannot be changed later" />
@@ -1213,8 +1266,14 @@ const AdminSignupScreen = () => {
               <Button
                 type="submit"
                 variant="contained"
-                disabled={!isPersonalValid}
-                endIcon={<EastIcon sx={{ fontSize: 20 }} />}
+                disabled={!isPersonalValid || createAdminAccountLoading}
+                endIcon={
+                  createAdminAccountLoading ? (
+                    <CircularProgress size={20} />
+                  ) : (
+                    <EastIcon sx={{ fontSize: 20 }} />
+                  )
+                }
                 sx={primaryButtonStyles}
               >
                 Next
@@ -1323,7 +1382,6 @@ const AdminSignupScreen = () => {
                   Choose a tenant domain for your Ajaxter workspace.
                 </Typography>
               </Box>
-
               <TextField
                 {...registerOrganization("tenantDomain")}
                 placeholder="your-workspace"
@@ -1397,7 +1455,6 @@ const AdminSignupScreen = () => {
                     : "Enter website to secure (Example: domain.com)"}
                 </Typography>
               </Box>
-
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
                 <Button
                   type="button"
@@ -1416,10 +1473,13 @@ const AdminSignupScreen = () => {
                 >
                   Save
                 </Button>
-              </Box>
+              </Box>{" "}
             </Box>
           )
         ) : null}
+        {/* </>
+         )
+      } */}
       </Box>
     </Box>
   );
