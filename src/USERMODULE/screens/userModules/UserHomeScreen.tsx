@@ -1,5 +1,13 @@
 import { useMemo, useState } from "react";
-import { Archive, LabelOutlined, Reply, Star } from "@mui/icons-material";
+import {
+  Archive,
+  AttachFile,
+  Close,
+  CloudUpload,
+  LabelOutlined,
+  Reply,
+  Star,
+} from "@mui/icons-material";
 import { Refresh, Sort } from "@mui/icons-material";
 import {
   Avatar,
@@ -7,12 +15,14 @@ import {
   Chip,
   Divider,
   IconButton,
+  styled,
   Tooltip,
   Typography,
 } from "@mui/material";
 import { Plus, Search } from "lucide-react";
 import emailPlaceholder from "../../../assets/email.png";
 import { AnimatePresence, motion } from "framer-motion";
+import UserTimeLine from "../../components/userModuleComponents/UserTimeLine";
 
 type TicketMessage = {
   id: string;
@@ -47,6 +57,18 @@ type Ticket = {
   tags: string[];
   messages: TicketMessage[];
 };
+
+const VisuallyHiddenInput = styled("input")({
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
+  height: 1,
+  overflow: "hidden",
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  whiteSpace: "nowrap",
+  width: 1,
+});
 
 const mockTickets: Ticket[] = [
   {
@@ -299,6 +321,7 @@ const initials = (value: string) =>
 const UserHomeScreen = () => {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [sortOrder, setSortOrder] = useState("asc");
+  const [uploadFile, setUploadFile] = useState<any>(null);
   const [sortedTickets, setSortedTickets] = useState(mockTickets);
   const [searchQuery, setSearchQuery] = useState("");
   const [isOpenReply, setIsOpenReply] = useState(false);
@@ -478,7 +501,7 @@ const UserHomeScreen = () => {
       </div>
 
       <div
-        className={`bg-white rounded-xl shadow-sm border  border-gray-100 flex flex-col overflow-hidden  ease-out ${
+        className={`bg-white rounded-xl shadow-sm border  border-gray-100 flex flex-col overflow-hidden max-h-[calc(100vh-95px)]  ease-out ${
           selectedTicket ? "flex-1" : "w-[30%]"
         }`}
       >
@@ -626,7 +649,7 @@ const UserHomeScreen = () => {
                     : "justify-start";
 
                   const bubbleBase =
-                    "max-w-[70%] rounded-2xl border px-4 py-3 shadow-sm";
+                    "max-w-[100%] rounded-2xl border px-4 py-3 shadow-xl";
                   const bubbleTheme = isInternal
                     ? "bg-amber-50 border-amber-200"
                     : isAgent
@@ -639,75 +662,80 @@ const UserHomeScreen = () => {
                     : "text-blue-800";
 
                   return (
-                    <div
-                      key={message.id}
-                      className={`flex ${alignment} items-start gap-3`}
-                    >
-                      {isCustomer && (
-                        <Avatar
-                          sx={{
-                            width: 36,
-                            height: 36,
-                            bgcolor: "#1d4ed8",
-                            fontSize: "0.75rem",
-                          }}
-                        >
-                          {initials(message.author)}
-                        </Avatar>
-                      )}
+                    <>
+                      <div
+                        key={message.id}
+                        className={`flex ${alignment} items-start gap-3 `}
+                      >
+                        {isCustomer && (
+                          <Avatar
+                            sx={{
+                              width: 36,
+                              height: 36,
+                              bgcolor: "#1d4ed8",
+                              fontSize: "0.75rem",
+                            }}
+                          >
+                            {initials(message.author)}
+                          </Avatar>
+                        )}
 
-                      <div className={`${bubbleBase} ${bubbleTheme}`}>
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <Typography
-                              variant="subtitle2"
-                              className={`font-semibold ${headingColor}`}
-                            >
-                              {message.author}
-                            </Typography>
+                        <div className={`${bubbleBase} ${bubbleTheme}`}>
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <Typography
+                                variant="subtitle2"
+                                className={`font-semibold ${headingColor}`}
+                              >
+                                {message.author}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                className="text-gray-500"
+                              >
+                                {message.role}
+                              </Typography>
+                            </div>
                             <Typography
                               variant="caption"
                               className="text-gray-500"
                             >
-                              {message.role}
+                              {message.timestamp}
                             </Typography>
                           </div>
                           <Typography
-                            variant="caption"
-                            className="text-gray-500"
+                            component="pre"
+                            className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-gray-700"
                           >
-                            {message.timestamp}
+                            {message.content}
                           </Typography>
+                          {message.internal && (
+                            <Typography
+                              variant="caption"
+                              className="mt-3 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-700"
+                            >
+                              Internal note
+                            </Typography>
+                          )}
                         </div>
-                        <Typography
-                          component="pre"
-                          className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-gray-700"
-                        >
-                          {message.content}
-                        </Typography>
-                        {message.internal && (
-                          <Typography
-                            variant="caption"
-                            className="mt-3 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-700"
+
+                        {isAgent && (
+                          <Avatar
+                            sx={{
+                              width: 36,
+                              height: 36,
+                              bgcolor: "#f97316",
+                              fontSize: "0.75rem",
+                            }}
                           >
-                            Internal note
-                          </Typography>
+                            {initials(message.author)}
+                          </Avatar>
                         )}
                       </div>
-
-                      {isAgent && (
-                        <Avatar
-                          sx={{
-                            width: 36,
-                            height: 36,
-                            bgcolor: "#f97316",
-                            fontSize: "0.75rem",
-                          }}
-                        >
-                          {initials(message.author)}
-                        </Avatar>
-                      )}
-                    </div>
+                      <div className="mx-12">
+                        <UserTimeLine />
+                      </div>
+                    </>
                   );
                 })}
               </div>
@@ -728,19 +756,70 @@ const UserHomeScreen = () => {
                   // transition={{ duration: 0.1, ease: "easeInOut" }}
                   className="overflow-hidden"
                 >
-                  <div className="px-5 py-4 border-t border-gray-100 bg-gray-50">
-                    <Typography
-                      variant="subtitle2"
-                      className="text-gray-600 mb-2"
-                    >
-                      Customer Reply
-                    </Typography>
+                  <div className="px-5 py-2 border-t border-gray-100 bg-gray-50">
+                    <div className="flex justify-between items-center mb-1">
+                      <Typography variant="subtitle2">
+                        Customer Reply
+                      </Typography>
+                      <IconButton size="small">
+                        <Close fontSize="small" />
+                      </IconButton>
+                    </div>
                     <div className="flex flex-col gap-3">
                       <textarea
                         rows={4}
-                        className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                        maxLength={365}
+                        className="w-full resize-none rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
                         placeholder={`Reply to ${selectedTicket.requester.name}…`}
                       />
+                    </div>
+                    <div className="mt-2 flex justify-between">
+                      <div className="flex gap-4 items-center">
+                        <IconButton
+                          component="label"
+                          size="small"
+                          role={undefined}
+                          tabIndex={-1}
+                          // startIcon={}
+                        >
+                          <AttachFile fontSize="small" />
+                          <VisuallyHiddenInput
+                            type="file"
+                            onChange={(event) =>
+                            {
+                              if (uploadFile.length < 1) {
+                                setUploadFile(event.target.files);
+                            }
+                            setUploadFile(event.target.files)
+                            }}
+                          />
+                        </IconButton>
+                        {uploadFile && uploadFile.length > 0 && (
+                          <Tooltip
+                            title={
+                              <div>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontSize: 12 }}
+                                >
+                                  {uploadFile?.[0]?.name} |{" "}
+                                  {uploadFile?.[0]?.size}
+                                </Typography>
+                              </div>
+                            }
+                          >
+                            <Typography
+                              variant="subtitle1"
+                              sx={{ fontSize: 10, cursor: "pointer" }}
+                            >
+                              {uploadFile?.[0]?.name?.slice(0, 6) + "...."}
+                            </Typography>
+                          </Tooltip>
+                        )}
+                      </div>
+                      <Button variant="contained" size="small">
+                        Send
+                      </Button>
                     </div>
                   </div>
                 </motion.div>

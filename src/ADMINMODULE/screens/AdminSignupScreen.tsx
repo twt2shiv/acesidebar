@@ -2,6 +2,7 @@ import {
   Box,
   Button,
   Checkbox,
+  CircularProgress,
   FormControl,
   FormControlLabel,
   FormLabel,
@@ -42,6 +43,13 @@ import GoogleRecaptcha, {
   GoogleRecaptchaRef,
 } from "../../components/reusable/GoogleRecaptcha";
 import lockIconGreen from "../../assets/icons/lock_icon_green.svg";
+import { ContactPhone } from "@mui/icons-material";
+import {
+  useAdminSignUpMutation,
+  useAdminSignUpOtpVerifyMutation,
+  useCreateAdminAccountMutation,
+} from "../../services/auth";
+import { useToast } from "../../hooks/useToast";
 
 // Constants
 const PRIMARY_COLOR = "#2567B3";
@@ -126,13 +134,10 @@ const personalInfoSchema = z.object({
       (val) => /^[A-Za-z\s]+$/.test(val),
       "Only letters and spaces allowed. No numbers or special characters."
     )
-    .refine(
-      (val) => {
-        const spaceCount = (val.match(/\s/g) || []).length;
-        return spaceCount >= 1 && spaceCount <= 3;
-      },
-      "Must contain 1 to 3 spaces"
-    )
+    .refine((val) => {
+      const spaceCount = (val.match(/\s/g) || []).length;
+      return spaceCount >= 1 && spaceCount <= 3;
+    }, "Must contain 1 to 3 spaces")
     .refine(
       (val) => /^[A-Za-z]+(\s[A-Za-z]+){1,3}$/.test(val.trim()),
       "Invalid format. Use only letters with 1 to 3 spaces between words."
@@ -152,18 +157,12 @@ const organizationSchema = z.object({
     .string({ required_error: "Subdomain is required" })
     .min(4, "Subdomain must be at least 4 characters")
     .max(15, "Subdomain must be 15 characters or less")
-    .refine(
-      (val) => !val.includes("."),
-      "Cannot contain dots"
-    )
+    .refine((val) => !val.includes("."), "Cannot contain dots")
     .refine(
       (val) => !val.startsWith("-") && !val.endsWith("-"),
       "Cannot start or end with a hyphen"
     )
-    .refine(
-      (val) => !val.includes("--"),
-      "Cannot contain consecutive hyphens"
-    )
+    .refine((val) => !val.includes("--"), "Cannot contain consecutive hyphens")
     .transform((val) => val.toLowerCase())
     .refine(
       (val) => /^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(val),
@@ -225,16 +224,19 @@ const AdminSignupScreen = () => {
       tenantDomain: "",
     },
   });
-
+  const { showToast } = useToast();
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState<boolean>(false);
   const [captchaToken, setCaptchaToken] = useState<string>("");
   const [isCaptchaVerified, setIsCaptchaVerified] = useState<boolean>(false);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [isSignupComplete, setIsSignupComplete] = useState<boolean>(false);
   const [submittedEmail, setSubmittedEmail] = useState<string>("");
-  const [otpDigits, setOtpDigits] = useState<string[]>(Array(OTP_LENGTH).fill(""));
+  const [otpDigits, setOtpDigits] = useState<string[]>(
+    Array(OTP_LENGTH).fill("")
+  );
   const otpInputRefs = useRef<Array<HTMLInputElement | null>>([]);
-  const [personalInfo, setPersonalInfo] = useState<PersonalInfoFormValues | null>(null);
+  const [personalInfo, setPersonalInfo] =
+    useState<PersonalInfoFormValues | null>(null);
   const [resendAttempts, setResendAttempts] = useState<number>(0);
   const [resendTimer, setResendTimer] = useState<number>(0);
   const baseDomain = useMemo(() => {
@@ -252,6 +254,37 @@ const AdminSignupScreen = () => {
   const tenantDomainValue = watchOrganization("tenantDomain");
 
   const recaptchaRef = useRef<GoogleRecaptchaRef>(null);
+
+  const [adminSignUp, { isLoading: signupLoading }] = useAdminSignUpMutation();
+  const [adminSignUpOtpVerify, { isLoading: otpVerifyLoading }] =
+    useAdminSignUpOtpVerifyMutation();
+  const [createAdminAccount, { isLoading: createAdminAccountLoading }] =
+    useCreateAdminAccountMutation();
+
+  const handleCheckSteps = () => {
+    const refId = localStorage.getItem("refId");
+    if (!refId) {
+      return;
+    }
+
+    const payload = {
+      url: "check-redirect",
+      body: {
+        ref: refId,
+      },
+    };
+    adminSignUp(payload).then((res: any) => {
+      if (res?.success) {
+        const s = res?.data?.step;
+        setStep(s);
+        localStorage.setItem("refId", res?.data?.ref);
+      }
+    });
+  };
+
+  // useEffect(() => {
+  //   handleCheckSteps();
+  // }, []);
 
   useEffect(() => {
     if (!hasAcceptedTerms && step === 1) {
@@ -282,7 +315,13 @@ const AdminSignupScreen = () => {
     if (!hasAcceptedTerms) return true;
     if (!isCaptchaVerified || !captchaToken) return true;
     return false;
-  }, [emailValue, isEmailInvalid, hasAcceptedTerms, isCaptchaVerified, captchaToken]);
+  }, [
+    emailValue,
+    isEmailInvalid,
+    hasAcceptedTerms,
+    isCaptchaVerified,
+    captchaToken,
+  ]);
 
   const progressStatuses = useMemo(() => {
     return Array.from({ length: TOTAL_STEPS }).map((_, index) => {
@@ -305,27 +344,65 @@ const AdminSignupScreen = () => {
   };
 
   const onEmailSubmit = (data: SignUpFormValues) => {
-    setSubmittedEmail(data.email.trim());
-    setOtpDigits(Array(OTP_LENGTH).fill(""));
-    setResendAttempts(0);
-    setResendTimer(0);
-    resetForms();
-    setStep(2);
+    const payload = {
+      url: "validate-email",
+      body: {
+        email: data.email.trim(),
+      },
+    };
+
+    adminSignUp(payload).then((res: any) => {
+      if (res?.data?.success) {
+        const s = res?.data?.data?.step;
+
+        setStep(s);
+        const refId = JSON.stringify(res?.data?.data?.ref);
+        localStorage.setItem("refId", refId);
+        setSubmittedEmail(data.email.trim());
+        setOtpDigits(Array(OTP_LENGTH).fill(""));
+        setResendAttempts(0);
+        setResendTimer(0);
+        resetForms();
+      }
+      if (res?.data?.type === "error") {
+        showToast(res?.data?.message, "error");
+        return;
+      }
+    });
   };
 
   const onOtpSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const ref = JSON.parse(localStorage.getItem("refId") as string);
     const otpValue = otpDigits.join("");
-    if (otpValue.length !== OTP_LENGTH) {
+    if (otpValue.length !== OTP_LENGTH || !ref || ref === undefined) {
+      showToast("Invalid OTP or ref", "error");
       return;
     }
-    console.log("Verify OTP", {
-      email: submittedEmail,
-      otp: otpValue,
+    const payload = {
+      param: ref,
+      body: {
+        email: submittedEmail,
+        otp: otpValue,
+      },
+    };
+
+    adminSignUpOtpVerify(payload).then((res: any) => {
+      if (res?.data?.success) {
+        const s = res?.data?.data?.step;
+        setStep(s);
+        const refId = JSON.stringify(res?.data?.data?.ref);
+        localStorage.setItem("refId", refId);
+        setSubmittedEmail(res?.data?.email);
+        setResendTimer(0);
+
+        resetForms();
+      }
+      if (res?.data?.type === "error") {
+        showToast(res?.data?.message, "error");
+        return;
+      }
     });
-    setResendTimer(0);
-    setStep(3);
-    resetForms();
   };
 
   const handleChangeEmail = () => {
@@ -350,8 +427,41 @@ const AdminSignupScreen = () => {
   };
 
   const onPersonalInfoSubmit = (values: PersonalInfoFormValues) => {
-    setPersonalInfo(values);
-    setStep(4);
+    console.log("onPersonalInfoSubmit", values);
+    const ref = JSON.parse(localStorage.getItem("refId") as string);
+    if (!ref || ref === undefined) {
+      showToast("Invalid  ref", "error");
+      return;
+    }
+    const payload = {
+      param: {
+        ref,
+        email: submittedEmail,
+      },
+      body: {
+        email: submittedEmail,
+        // otp: otpValue,
+      },
+    };
+
+    adminSignUpOtpVerify(payload).then((res: any) => {
+      if (res?.data?.success) {
+        const s = res?.data?.data?.step;
+        setStep(s);
+        const refId = JSON.stringify(res?.data?.data?.ref);
+        localStorage.setItem("refId", refId);
+        setSubmittedEmail(res?.data?.email);
+        setResendTimer(0);
+
+        resetForms();
+      }
+      if (res?.data?.type === "error") {
+        showToast(res?.data?.message, "error");
+        return;
+      }
+    });
+    // setPersonalInfo(values);
+    // setStep(4);
   };
 
   const onOrganizationSubmit = (values: OrganizationFormValues) => {
@@ -424,13 +534,21 @@ const AdminSignupScreen = () => {
         return;
       }
 
-      if (event.key === "ArrowRight" && index < otpInputRefs.current.length - 1) {
+      if (
+        event.key === "ArrowRight" &&
+        index < otpInputRefs.current.length - 1
+      ) {
         event.preventDefault();
         otpInputRefs.current[index + 1]?.focus();
         return;
       }
 
-      if (!isDigit && event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
+      if (
+        !isDigit &&
+        event.key.length === 1 &&
+        !event.ctrlKey &&
+        !event.metaKey
+      ) {
         event.preventDefault();
       }
     };
@@ -449,7 +567,10 @@ const AdminSignupScreen = () => {
         return next;
       });
 
-      const focusIndex = Math.min(index + pasted.length, otpInputRefs.current.length - 1);
+      const focusIndex = Math.min(
+        index + pasted.length,
+        otpInputRefs.current.length - 1
+      );
       otpInputRefs.current[focusIndex]?.focus();
       otpInputRefs.current[focusIndex]?.select?.();
     };
@@ -458,11 +579,13 @@ const AdminSignupScreen = () => {
   const resendHelperText = canResend
     ? "Resend code"
     : resendAttempts >= MAX_RESEND_ATTEMPTS
-      ? "Resend limit reached"
-      : `Resend in ${resendTimer}s`;
+    ? "Resend limit reached"
+    : `Resend in ${resendTimer}s`;
 
   return (
-    <Box sx={{ minHeight: "100vh", width: "100%", backgroundColor: SECONDARY_BG }}>
+    <Box
+      sx={{ minHeight: "100vh", width: "100%", backgroundColor: SECONDARY_BG }}
+    >
       <Box
         sx={{
           display: "grid",
@@ -502,9 +625,7 @@ const AdminSignupScreen = () => {
                 fontWeight: 600,
               }}
             >
-              <Typography component="span" sx={{ lineHeight: 1 }}>
-                ☎️
-              </Typography>
+              <ContactPhone fontSize="large" />
             </Box>
             <Box>
               <Typography
@@ -519,10 +640,14 @@ const AdminSignupScreen = () => {
                 Built for modern support teams
               </Typography>
               <Typography
-                sx={{ opacity: 0.9, lineHeight: 1.6, fontSize: { xs: 14, md: 16 } }}
+                sx={{
+                  opacity: 0.9,
+                  lineHeight: 1.6,
+                  fontSize: { xs: 14, md: 16 },
+                }}
               >
-                Manage every interaction in one collaborative workspace tailored for Ajaxter
-                customers.
+                Manage every interaction in one collaborative workspace tailored
+                for Ajaxter customers.
               </Typography>
               <Stack spacing={2} sx={{ mt: 3 }}>
                 {[
@@ -530,7 +655,10 @@ const AdminSignupScreen = () => {
                   "Automate routing, SLAs, and approvals with intuitive workflows.",
                   "Give agents AI-assisted responses and shared context for every ticket.",
                 ].map((item) => (
-                  <Typography key={item} sx={{ fontSize: { xs: 13, md: 15 }, opacity: 0.9 }}>
+                  <Typography
+                    key={item}
+                    sx={{ fontSize: { xs: 13, md: 15 }, opacity: 0.9 }}
+                  >
                     • {item}
                   </Typography>
                 ))}
@@ -554,9 +682,16 @@ const AdminSignupScreen = () => {
               const isCurrent = status === "current";
               const isCompleted = status === "completed";
               const isLastStep = index === TOTAL_STEPS - 1;
-              const showCheckMark = isCompleted || (isLastStep && isSignupComplete);
-              const ringColor = isCurrent || isCompleted || (isLastStep && isSignupComplete) ? "#409a00" : "#d0d4df";
-              const innerColor = isCurrent || isCompleted || (isLastStep && isSignupComplete) ? "#409a00" : "#b6bcc9";
+              const showCheckMark =
+                isCompleted || (isLastStep && isSignupComplete);
+              const ringColor =
+                isCurrent || isCompleted || (isLastStep && isSignupComplete)
+                  ? "#409a00"
+                  : "#d0d4df";
+              const innerColor =
+                isCurrent || isCompleted || (isLastStep && isSignupComplete)
+                  ? "#409a00"
+                  : "#b6bcc9";
               const isConnectorActive = index < step - 1;
 
               return (
@@ -576,9 +711,12 @@ const AdminSignupScreen = () => {
                       height: 48,
                       borderRadius: "50%",
                       backgroundColor: "#ffffff",
-                      boxShadow: isCurrent || isCompleted || (isLastStep && isSignupComplete)
-                        ? "0 18px 30px rgba(114, 87, 255, 0.35)"
-                        : "0 12px 24px rgba(34, 61, 120, 0.18)",
+                      boxShadow:
+                        isCurrent ||
+                        isCompleted ||
+                        (isLastStep && isSignupComplete)
+                          ? "0 18px 30px rgba(114, 87, 255, 0.35)"
+                          : "0 12px 24px rgba(34, 61, 120, 0.18)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -594,7 +732,9 @@ const AdminSignupScreen = () => {
                           width: isCurrent ? 12 : 8,
                           height: isCurrent ? 12 : 8,
                           borderRadius: "50%",
-                          border: isCurrent ? "4px solid rgb(36 98 171 / 63%)" : "none",
+                          border: isCurrent
+                            ? "4px solid rgb(36 98 171 / 63%)"
+                            : "none",
                           background: isCurrent ? "#fff" : innerColor,
                           boxShadow: isCurrent
                             ? "0 0 0 4px rgb(36 97 169 / 42%)"
@@ -606,7 +746,7 @@ const AdminSignupScreen = () => {
                   {index < progressStatuses.length - 1 && (
                     <Box
                       sx={{
-                        height: 25
+                        height: 25,
                       }}
                     />
                   )}
@@ -647,10 +787,12 @@ const AdminSignupScreen = () => {
                   fontSize: { xs: 20, md: 24 },
                 }}
               >
-                Get started with Ajaxter Service Desk to provide your customers with responsive,
-                always-on support.
+                Get started with Ajaxter Service Desk to provide your customers
+                with responsive, always-on support.
               </Typography>
-              <Typography sx={{ mt: 1.5, color: "#5f6c86", fontSize: { xs: 14, md: 16 } }}>
+              <Typography
+                sx={{ mt: 1.5, color: "#5f6c86", fontSize: { xs: 14, md: 16 } }}
+              >
                 Already have an account?{" "}
                 <Link
                   component="button"
@@ -701,7 +843,9 @@ const AdminSignupScreen = () => {
               control={
                 <Checkbox
                   checked={hasAcceptedTerms}
-                  onChange={(event) => setHasAcceptedTerms(event.target.checked)}
+                  onChange={(event) =>
+                    setHasAcceptedTerms(event.target.checked)
+                  }
                   sx={{
                     color: PRIMARY_COLOR,
                     "&.Mui-checked": {
@@ -711,10 +855,13 @@ const AdminSignupScreen = () => {
                 />
               }
               label={
-                <Typography sx={{ color: "#5f6c86", fontSize: { xs: 13, md: 15 } }}>
-                  The personal information that you have provided will help us to deliver,
-                  develop and promote our products and services. By signing up, you hereby
-                  declare that you have read and agree to our{" "}
+                <Typography
+                  sx={{ color: "#5f6c86", fontSize: { xs: 13, md: 15 } }}
+                >
+                  The personal information that you have provided will help us
+                  to deliver, develop and promote our products and services. By
+                  signing up, you hereby declare that you have read and agree to
+                  our{" "}
                   <Link href="#" underline="always">
                     Terms of Service
                   </Link>{" "}
@@ -758,7 +905,7 @@ const AdminSignupScreen = () => {
             <Button
               type="submit"
               variant="contained"
-              disabled={isSubmitDisabled}
+              disabled={isSubmitDisabled || signupLoading}
               sx={{
                 mt: 2,
                 alignSelf: { xs: "stretch", md: "flex-start" },
@@ -779,7 +926,13 @@ const AdminSignupScreen = () => {
                   color: "#fff",
                 },
               }}
-              endIcon={<EastIcon sx={{ fontSize: 20 }} />}
+              endIcon={
+                signupLoading ? (
+                  <CircularProgress size={20} />
+                ) : (
+                  <EastIcon sx={{ fontSize: 20 }} />
+                )
+              }
             >
               Get Started
             </Button>
@@ -825,7 +978,10 @@ const AdminSignupScreen = () => {
               >
                 <Typography component="span">
                   We’ve emailed a one-time password to{" "}
-                  <Typography component="span" sx={{ fontWeight: 600, color: PRIMARY_DARK }}>
+                  <Typography
+                    component="span"
+                    sx={{ fontWeight: 600, color: PRIMARY_DARK }}
+                  >
                     {submittedEmail}
                   </Typography>
                 </Typography>
@@ -915,8 +1071,14 @@ const AdminSignupScreen = () => {
               <Button
                 type="submit"
                 variant="contained"
-                disabled={!isOtpValid}
-                endIcon={<EastIcon sx={{ fontSize: 20 }} />}
+                disabled={!isOtpValid || otpVerifyLoading}
+                endIcon={
+                  otpVerifyLoading ? (
+                    <CircularProgress size={20} />
+                  ) : (
+                    <EastIcon sx={{ fontSize: 20 }} />
+                  )
+                }
                 sx={primaryButtonStyles}
               >
                 Verify OTP
@@ -952,7 +1114,9 @@ const AdminSignupScreen = () => {
               >
                 Tell us about yourself.
               </Typography>
-              <Typography sx={{ mt: 1.5, color: "#5f6c86", fontSize: { xs: 14, md: 16 } }}>
+              <Typography
+                sx={{ mt: 1.5, color: "#5f6c86", fontSize: { xs: 14, md: 16 } }}
+              >
                 Share your details so we can personalize your admin workspace.
               </Typography>
             </Box>
@@ -987,10 +1151,14 @@ const AdminSignupScreen = () => {
                 row
                 value={genderValue ?? ""}
                 onChange={(event) =>
-                  setPersonalValue("gender", event.target.value as PersonalInfoFormValues["gender"], {
-                    shouldValidate: true,
-                    shouldTouch: true,
-                  })
+                  setPersonalValue(
+                    "gender",
+                    event.target.value as PersonalInfoFormValues["gender"],
+                    {
+                      shouldValidate: true,
+                      shouldTouch: true,
+                    }
+                  )
                 }
               >
                 <FormControlLabel
@@ -1020,7 +1188,10 @@ const AdminSignupScreen = () => {
                 />
               </RadioGroup>
               {personalErrors.gender && (
-                <Typography variant="caption" sx={{ color: "error.main", mt: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "error.main", mt: 0.5 }}
+                >
                   {personalErrors.gender.message}
                 </Typography>
               )}
@@ -1038,7 +1209,9 @@ const AdminSignupScreen = () => {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <CorporateFareIcon sx={{ color: "#5f6c86", fontSize: 20 }} />
+                    <CorporateFareIcon
+                      sx={{ color: "#5f6c86", fontSize: 20 }}
+                    />
                   </InputAdornment>
                 ),
               }}
@@ -1082,14 +1255,24 @@ const AdminSignupScreen = () => {
               >
                 Congratulations, all done!
               </Typography>
-              <Typography sx={{ color: "#5f6c86", fontSize: { xs: 15, md: 16 }, maxWidth: 520 }}>
+              <Typography
+                sx={{
+                  color: "#5f6c86",
+                  fontSize: { xs: 15, md: 16 },
+                  maxWidth: 520,
+                }}
+              >
                 We'll send you an email after we verify{" "}
-                <Typography component="span" sx={{ fontWeight: 600, color: PRIMARY_DARK }}>
+                <Typography
+                  component="span"
+                  sx={{ fontWeight: 600, color: PRIMARY_DARK }}
+                >
                   {tenantDomainValue
                     ? `${tenantDomainValue}.${baseDomain}`
                     : `your tenant domain on ${baseDomain}`}
                 </Typography>
-                . In the meantime, you can head back to the login screen or explore our help center.
+                . In the meantime, you can head back to the login screen or
+                explore our help center.
               </Typography>
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                 <Button
@@ -1102,7 +1285,9 @@ const AdminSignupScreen = () => {
                 </Button>
                 <Button
                   variant="outlined"
-                  onClick={() => window.open("https://support.ajaxter.com", "_blank")}
+                  onClick={() =>
+                    window.open("https://support.ajaxter.com", "_blank")
+                  }
                   sx={outlinedButtonStyles}
                 >
                   Visit Help Center
@@ -1127,110 +1312,122 @@ const AdminSignupScreen = () => {
                 ...stepContentAnimation,
               }}
             >
-            <Box>
-              <Typography
-                sx={{
-                  mt: 2,
-                  color: "#1f2a37",
-                  fontWeight: 600,
-                  fontSize: { xs: 20, md: 24 },
-                }}
-              >
-                Set up your workspace.
-              </Typography>
-              <Typography sx={{ mt: 1.5, color: "#5f6c86", fontSize: { xs: 14, md: 16 } }}>
-                Choose a tenant domain for your Ajaxter workspace.
-              </Typography>
-            </Box>
+              <Box>
+                <Typography
+                  sx={{
+                    mt: 2,
+                    color: "#1f2a37",
+                    fontWeight: 600,
+                    fontSize: { xs: 20, md: 24 },
+                  }}
+                >
+                  Set up your workspace.
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 1.5,
+                    color: "#5f6c86",
+                    fontSize: { xs: 14, md: 16 },
+                  }}
+                >
+                  Choose a tenant domain for your Ajaxter workspace.
+                </Typography>
+              </Box>
 
-            <TextField
-              {...registerOrganization("tenantDomain")}
-              placeholder="your-workspace"
-              error={!!organizationErrors.tenantDomain}
-              helperText={
-                organizationErrors.tenantDomain?.message || (
-                  <HelperTextWithIcon message="Use lowercase letters, numbers, or hyphens." />
-                )
-              }
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <TravelExploreIcon sx={{ color: "#5f6c86", fontSize: 20 }} />
-                  </InputAdornment>
-                ),
-              }}
-              inputProps={{
-                style: { textTransform: "lowercase" },
-              }}
-              onChange={(e) => {
-                const value = e.target.value.toLowerCase();
-                setOrganizationValue("tenantDomain", value, { shouldValidate: true });
-              }}
-              sx={{ width: "auto", minWidth: 250, maxWidth: 250 }}
-            />
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                border: "1px solid #d7dce5",
-                borderRadius: 1,
-                px: 2,
-                py: 1.5,
-                backgroundColor: "#ffffff",
-              }}
-            >
-              <Box
-                component="img"
-                src={lockIconGreen}
-                alt="Secure"
-                sx={{
-                  width: 16,
-                  height: 16,
+              <TextField
+                {...registerOrganization("tenantDomain")}
+                placeholder="your-workspace"
+                error={!!organizationErrors.tenantDomain}
+                helperText={
+                  organizationErrors.tenantDomain?.message || (
+                    <HelperTextWithIcon message="Use lowercase letters, numbers, or hyphens." />
+                  )
+                }
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <TravelExploreIcon
+                        sx={{ color: "#5f6c86", fontSize: 20 }}
+                      />
+                    </InputAdornment>
+                  ),
                 }}
+                inputProps={{
+                  style: { textTransform: "lowercase" },
+                }}
+                onChange={(e) => {
+                  const value = e.target.value.toLowerCase();
+                  setOrganizationValue("tenantDomain", value, {
+                    shouldValidate: true,
+                  });
+                }}
+                sx={{ width: "auto", minWidth: 250, maxWidth: 250 }}
               />
-              <Typography
-                component="span"
+              <Box
                 sx={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: "#188038",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  border: "1px solid #d7dce5",
+                  borderRadius: 1,
+                  px: 2,
+                  py: 1.5,
+                  backgroundColor: "#ffffff",
                 }}
               >
-                Secure | https://
-              </Typography>
-              <Typography
-                component="span"
-                sx={{
-                  fontSize: 14,
-                  color: tenantDomainValue ? "#1f2a37" : "#9ca3af",
-                  fontWeight: tenantDomainValue ? 500 : 400,
-                }}
-              >
-                {tenantDomainValue ? `${tenantDomainValue}.${baseDomain}` : "Enter website to secure (Example: domain.com)"}
-              </Typography>
-            </Box>
+                <Box
+                  component="img"
+                  src={lockIconGreen}
+                  alt="Secure"
+                  sx={{
+                    width: 16,
+                    height: 16,
+                  }}
+                />
+                <Typography
+                  component="span"
+                  sx={{
+                    fontSize: 14,
+                    fontWeight: 500,
+                    color: "#188038",
+                  }}
+                >
+                  Secure | https://
+                </Typography>
+                <Typography
+                  component="span"
+                  sx={{
+                    fontSize: 14,
+                    color: tenantDomainValue ? "#1f2a37" : "#9ca3af",
+                    fontWeight: tenantDomainValue ? 500 : 400,
+                  }}
+                >
+                  {tenantDomainValue
+                    ? `${tenantDomainValue}.${baseDomain}`
+                    : "Enter website to secure (Example: domain.com)"}
+                </Typography>
+              </Box>
 
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-              <Button
-                type="button"
-                variant="outlined"
-                onClick={handleBackToPersonal}
-                sx={outlinedButtonStyles}
-              >
-                Back
-              </Button>
-              <Button
-                type="submit"
-                variant="contained"
-                disabled={!isOrganizationValid}
-                endIcon={<EastIcon sx={{ fontSize: 20 }} />}
-                sx={primaryButtonStyles}
-              >
-                Save
-              </Button>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  onClick={handleBackToPersonal}
+                  sx={outlinedButtonStyles}
+                >
+                  Back
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={!isOrganizationValid}
+                  endIcon={<EastIcon sx={{ fontSize: 20 }} />}
+                  sx={primaryButtonStyles}
+                >
+                  Save
+                </Button>
+              </Box>
             </Box>
-          </Box>
           )
         ) : null}
       </Box>
@@ -1239,4 +1436,3 @@ const AdminSignupScreen = () => {
 };
 
 export default AdminSignupScreen;
-
