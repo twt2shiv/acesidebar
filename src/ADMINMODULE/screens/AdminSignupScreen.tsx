@@ -15,6 +15,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
 import React, {
   ChangeEvent,
   ClipboardEvent,
@@ -791,10 +792,17 @@ const AdminSignupScreen = () => {
             </Box>
 
             <TextField
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <AlternateEmailIcon />
+                  </InputAdornment>
+                ),
+              }}
               {...register("email")}
+              placeholder="john@example.com"
               variant="outlined"
               fullWidth
-              label="Email"
               type="email"
               error={isEmailInvalid}
               helperText={

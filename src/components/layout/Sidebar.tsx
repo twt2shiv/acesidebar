@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Drawer, Box, IconButton, styled } from "@mui/material";
+import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import {
   SignalCellularAlt as SignalIcon,
   People as PeopleIcon,
@@ -136,13 +137,13 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
             bgcolor={iconColors[1]}
             onClick={() => handleNavigation("/tickets")}
           >
-            <AllInboxIcon fontSize="inherit" />
+            <ConfirmationNumberIcon fontSize="inherit" />
           </ColoredShortcutButton>
           <ColoredShortcutButton
             bgcolor={iconColors[4]}
             onClick={() => handleNavigation("/chat")}
           >
-            <ForumIcon fontSize="inherit" />
+            {/* <ForumIcon fontSize="inherit" />
           </ColoredShortcutButton>
           <ColoredShortcutButton
             bgcolor={iconColors[5]}
@@ -153,7 +154,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
           <ColoredShortcutButton
             bgcolor={iconColors[2]}
             onClick={() => handleNavigation("/user")}
-          >
+          > */}
             <PeopleIcon fontSize="inherit" />
           </ColoredShortcutButton>
           <ColoredShortcutButton
