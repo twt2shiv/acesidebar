@@ -306,7 +306,7 @@ const StatusTab = ({ ticket }: any) => {
   }, [debouncedValue, triggerSLA, dept?.deptID, priority]);
 
   return (
-    <div className="w-full h-[calc(100vh-100px)] overflow-hidden bg-[#e8f2ff] border border-[#ecf4ff]">
+    <div className="w-full h-[calc(100vh-100px)] overflow-hidden bg-[#ededed]">
       <div className="w-full min-h-[calc(100vh-265px)] max-h-[calc(100vh-265px)] overflow-y-auto custom-scrollbar">
         <div className="w-full space-y-3 p-2 sm:p-3">
           <Typography variant="subtitle1">Properties</Typography>

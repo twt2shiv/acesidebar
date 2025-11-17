@@ -440,7 +440,7 @@ const LeftMenu: React.FC = () => {
             <IconButton
               sx={{
                 backgroundColor: "#fff",
-                color: "#12344d",
+                color: "#384859",
                 "&:hover": {
                   backgroundColor: "#f5f5f5",
                 },
