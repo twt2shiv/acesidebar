@@ -15,7 +15,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
+import AlternateEmailIcon from "@mui/icons-material/AlternateEmail";
 import React, {
   ChangeEvent,
   ClipboardEvent,
@@ -251,28 +251,23 @@ const AdminSignupScreen = () => {
   const [redirectAdminAccount, { isLoading: redirectAdminAccountLoading }] =
     useRedirectAdminAccountMutation();
 
-  const handleCheckSteps = () => {
-    const ref = JSON.parse(localStorage.getItem("refId") as string);
-
-    if (!ref) {
-      return;
-    }
-
+  const handleCheckSteps = (refId: string) => {
     const payload = {
-      ref: ref,
+      ref: refId,
     };
     redirectAdminAccount(payload).then((res: any) => {
-      console.log(res);
       if (res?.data?.type === "redirect") {
         const s = res?.data?.data?.step;
+        const refValue = JSON.stringify(res?.data?.data?.ref);
+        localStorage.setItem("refId", refValue);
         setStep(s);
+      }
+      if (res?.data?.type === "error") {
+        showToast(res?.data?.message, "error");
+        return;
       }
     });
   };
-
-  useEffect(() => {
-    handleCheckSteps();
-  }, []);
 
   useEffect(() => {
     if (!hasAcceptedTerms && step === 1) {
@@ -332,31 +327,35 @@ const AdminSignupScreen = () => {
   };
 
   const onEmailSubmit = (data: SignUpFormValues) => {
-    const payload = {
-      url: "validate-email",
-      body: {
-        email: data.email.trim(),
-      },
-    };
+    const ref = JSON.parse(localStorage.getItem("refId") as string);
 
-    adminSignUp(payload).then((res: any) => {
-      if (res?.data?.success) {
-        const s = res?.data?.data?.step;
-
-        setStep(s);
-        const refId = JSON.stringify(res?.data?.data?.ref);
-        localStorage.setItem("refId", refId);
-        setSubmittedEmail(data.email.trim());
-        setOtpDigits(Array(OTP_LENGTH).fill(""));
-        setResendAttempts(0);
-        setResendTimer(0);
-        resetForms();
-      }
-      if (res?.data?.type === "error") {
-        showToast(res?.data?.message, "error");
-        return;
-      }
-    });
+    if (ref) {
+      handleCheckSteps(ref);
+    } else {
+      const payload = {
+        url: "validate-email",
+        body: {
+          email: data.email.trim(),
+        },
+      };
+      adminSignUp(payload).then((res: any) => {
+        if (res?.data?.success) {
+          const s = res?.data?.data?.step;
+          setStep(s);
+          const refId = JSON.stringify(res?.data?.data?.ref);
+          localStorage.setItem("refId", refId);
+          setSubmittedEmail(data.email.trim());
+          setOtpDigits(Array(OTP_LENGTH).fill(""));
+          setResendAttempts(0);
+          setResendTimer(0);
+          resetForms();
+        }
+        if (res?.data?.type === "error") {
+          showToast(res?.data?.message, "error");
+          return;
+        }
+      });
+    }
   };
 
   const onOtpSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -790,7 +789,7 @@ const AdminSignupScreen = () => {
               gap: 4,
               justifyContent: "center",
               overflowY: { md: "auto" },
-              maxHeight: { md: "100vh" }
+              maxHeight: { md: "100vh" },
             }}
           >
             <Box>
@@ -983,7 +982,7 @@ const AdminSignupScreen = () => {
               gap: 4,
               justifyContent: "center",
               overflowY: { md: "auto" },
-              maxHeight: { md: "100vh" }
+              maxHeight: { md: "100vh" },
             }}
           >
             <Box>
@@ -1131,7 +1130,7 @@ const AdminSignupScreen = () => {
               gap: 4,
               justifyContent: "center",
               overflowY: { md: "auto" },
-              maxHeight: { md: "100vh" }
+              maxHeight: { md: "100vh" },
             }}
           >
             <Box>
@@ -1293,7 +1292,7 @@ const AdminSignupScreen = () => {
                 gap: 3,
                 justifyContent: "center",
                 alignItems: "flex-start",
-                textAlign: "left"
+                textAlign: "left",
               }}
             >
               <Typography
@@ -1358,7 +1357,7 @@ const AdminSignupScreen = () => {
                 gap: 4,
                 justifyContent: "center",
                 overflowY: { md: "auto" },
-                maxHeight: { md: "100vh" }
+                maxHeight: { md: "100vh" },
               }}
             >
               <Box>
