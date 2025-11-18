@@ -15,12 +15,17 @@ const TicketTabsBar: React.FC = () => {
 
   if (!ticketTabs.length) return null;
 
-  const handleTabClick = (ticketNumber: string) => {
+  const handleTabClick = (ticketNumber: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setActiveTicketTab(ticketNumber);
     navigate(`/tickets/${ticketNumber}`);
   };
 
-  const handleCloseTab = (ticketNumber: string) => {
+  const handleCloseTab = (
+    ticketNumber: string,
+    e: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    e.stopPropagation();
     const remaining = ticketTabs.filter(
       (tab) => tab.ticketNumber !== ticketNumber
     );
@@ -33,15 +38,24 @@ const TicketTabsBar: React.FC = () => {
 
   return (
     <div className="ticket-tabs-wrapper">
-      <div className="ticket-tabs custom-scrollbar">
+      <ul className="ticket-tabs">
         {ticketTabs.map((tab) => {
           const isActive = tab.ticketNumber === activeTicketTab;
           const tabClass = `ticket-tab${isActive ? " active" : ""}`;
           return (
-            <div
+            <li
               key={tab.ticketNumber}
               className={tabClass}
-              onClick={() => handleTabClick(tab.ticketNumber)}
+              onClick={(e) => handleTabClick(tab.ticketNumber, e)}
+              role="tab"
+              aria-selected={isActive}
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleTabClick(tab.ticketNumber);
+                }
+              }}
             >
               <div className="ticket-tab-box">
                 <div className="ticket-tab__titles">
@@ -50,23 +64,20 @@ const TicketTabsBar: React.FC = () => {
                 </div>
                 <button
                   className="ticket-tab__close"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCloseTab(tab.ticketNumber);
-                  }}
-                  aria-label="Close tab"
+                  onClick={(e) => handleCloseTab(tab.ticketNumber, e)}
+                  aria-label={`Close tab ${tab.ticketNumber}`}
                   title="Close tab"
+                  type="button"
                 >
-                  <CloseIcon sx={{ fontSize: 16, color: "#d32f2f" }} />
+                  <CloseIcon sx={{ fontSize: 14 }} />
                 </button>
               </div>
-            </div>
+            </li>
           );
         })}
-      </div>
+      </ul>
     </div>
   );
 };
 
 export default TicketTabsBar;
-
