@@ -100,12 +100,6 @@ const extendedAuthApi = baseInstanceOfApi.injectEndpoints({
         body: credentials?.body,
       }),
     }),
-    redirectAdminAccount: builder.mutation({
-      query: (credentials) => ({
-        url: `/signup/check-redirect/${credentials?.ref}`,
-        method: "POST",
-      }),
-    }),
     resendOtp: builder.mutation({
       query: (credentials) => ({
         url: `/signup/resend-otp/${credentials?.ref}`,
@@ -131,6 +125,5 @@ export const {
   useAdminSignUpMutation,
   useAdminSignUpOtpVerifyMutation,
   useCreateAdminAccountMutation,
-  useRedirectAdminAccountMutation,
   useResendOtpMutation,
 } = extendedAuthApi;

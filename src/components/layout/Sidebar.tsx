@@ -30,18 +30,18 @@ const StyledDrawer = styled(Drawer, {
     width: open ? SIDEBAR_WIDTH : SIDEBAR_COLLAPSED_WIDTH,
     transition: "width 150ms cubic-bezier(0.4,0,0.2,1) 0ms",
     overflowX: "hidden",
-    backgroundColor: "#384859",
+    backgroundColor: "#133e5e",
     borderRight: "none",
   },
 }));
 
 const iconColors = [
-  "#526a7d", // green
-  "#526a7d", // blue
-  "#526a7d", // orange
-  "#526a7d", // red
-  "#526a7d", // purple
-  "#526a7d", // cyan
+  "#ffffff1a", // green
+  "#ffffff1a", // blue
+  "#ffffff1a", // orange
+  "#ffffff1a", // red
+  "#ffffff1a", // purple
+  "#ffffff1a", // cyan
 ];
 
 const ColoredShortcutButton = styled(IconButton)<{ bgcolor: string }>(

@@ -49,7 +49,6 @@ import {
   useAdminSignUpMutation,
   useAdminSignUpOtpVerifyMutation,
   useCreateAdminAccountMutation,
-  useRedirectAdminAccountMutation,
   useResendOtpMutation,
 } from "../../services/auth";
 import { useToast } from "../../hooks/useToast";
@@ -249,27 +248,7 @@ const AdminSignupScreen = () => {
     useAdminSignUpOtpVerifyMutation();
   const [createAdminAccount, { isLoading: createAdminAccountLoading }] =
     useCreateAdminAccountMutation();
-  const [redirectAdminAccount, { isLoading: redirectAdminAccountLoading }] =
-    useRedirectAdminAccountMutation();
   const [resendOtp, { isLoading: resendOtpLoading }] = useResendOtpMutation();
-
-  const handleCheckSteps = (refId: string) => {
-    const payload = {
-      ref: refId,
-    };
-    redirectAdminAccount(payload).then((res: any) => {
-      if (res?.data?.type === "redirect") {
-        const s = res?.data?.data?.step;
-        const refValue = JSON.stringify(res?.data?.data?.ref);
-        localStorage.setItem("refId", refValue);
-        setStep(s);
-      }
-      if (res?.data?.type === "error") {
-        showToast(res?.data?.message, "error");
-        return;
-      }
-    });
-  };
 
   useEffect(() => {
     if (!hasAcceptedTerms && step === 1) {
@@ -329,35 +308,38 @@ const AdminSignupScreen = () => {
   };
 
   const onEmailSubmit = (data: SignUpFormValues) => {
-    const ref = JSON.parse(localStorage.getItem("refId") as string);
+    const payload = {
+      url: "validate-email",
+      body: {
+        email: data.email.trim(),
+      },
+    };
 
-    if (ref) {
-      handleCheckSteps(ref);
-    } else {
-      const payload = {
-        url: "validate-email",
-        body: {
-          email: data.email.trim(),
-        },
-      };
-      adminSignUp(payload).then((res: any) => {
-        if (res?.data?.success) {
-          const s = res?.data?.data?.step;
-          setStep(s);
-          const refId = JSON.stringify(res?.data?.data?.ref);
-          localStorage.setItem("refId", refId);
-          setSubmittedEmail(data.email.trim());
-          setOtpDigits(Array(OTP_LENGTH).fill(""));
-          setResendAttempts(0);
-          setResendTimer(0);
-          resetForms();
+    adminSignUp(payload).then((res: any) => {
+      if (res?.data?.type === "error") {
+        showToast(res?.data?.message, "error");
+        return;
+      }
+
+      if (res?.data?.success) {
+        const responseData = res?.data?.data || {};
+        const nextStep =
+          responseData?.step && responseData.step >= 1 && responseData.step <= 4
+            ? (responseData.step as 1 | 2 | 3 | 4)
+            : 2;
+
+        if (responseData?.ref) {
+          localStorage.setItem("refId", JSON.stringify(responseData.ref));
         }
-        if (res?.data?.type === "error") {
-          showToast(res?.data?.message, "error");
-          return;
-        }
-      });
-    }
+
+        setStep(nextStep);
+        setSubmittedEmail(responseData?.email ?? data.email.trim());
+        setOtpDigits(Array(OTP_LENGTH).fill(""));
+        setResendAttempts(0);
+        setResendTimer(0);
+        resetForms();
+      }
+    });
   };
 
   const onOtpSubmit = (event: FormEvent<HTMLFormElement>) => {
