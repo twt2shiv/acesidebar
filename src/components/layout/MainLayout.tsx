@@ -177,9 +177,9 @@ const MainLayout = () => {
             open={isOpen}
             isPopupOpen={isAnyPopupOpen}
             helpCenterOpen={helpCenterOpen}
-            sx={{ position: "relative" }}
+            sx={{ position: "relative", }}
           >
-            <MainContent className="custom-scrollbar">
+            <MainContent className="custom-scrollbar" style={{}}>
               <Suspense
                 fallback={
                   <div className="flex items-center justify-center">

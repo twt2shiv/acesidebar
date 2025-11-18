@@ -35,7 +35,7 @@ import ReportProblemIcon from "@mui/icons-material/ReportProblem";
 import TicketSortingPopover from "../../../components/shared/TicketSortingPopover";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import UserHoverPopup from "../../../components/popup/UserHoverPopup";
 import emptyticketimg from "../../../assets/24681956_6988299.svg";
 import { useCommanApiMutation } from "../../../services/threadsApi";
@@ -65,6 +65,7 @@ interface StatusOption {
 
 const Tickets: React.FC = () => {
   const navigate = useNavigate();
+ const location = useLocation();
   const [sortBy, setSortBy] = useState("Sort By");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -1032,7 +1033,7 @@ const Tickets: React.FC = () => {
 
   return (
     <>
-      <div className="flex flex-col bg-[#f5f5f5] h-[calc(100vh-80px)]  ">
+      <div className={`flex flex-col bg-[#f5f5f5] ${location.pathname === "/tickets" ||location.pathname.startsWith("/tickets/") ? " h-[calc(100vh-125px)]" : "h-[calc(100vh-98px)]"} `}>
         <div className="flex items-center justify-between px-2 py-1 border border-[#e8eaec] bg-[#e8eaec] shadow-sm">
           {/* Left: Title, master checkbox, count, and action buttons (inline) */}
           <div className="flex items-center gap-3 flex-1 min-w-0">

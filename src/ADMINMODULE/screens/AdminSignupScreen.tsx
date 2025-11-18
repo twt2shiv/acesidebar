@@ -50,6 +50,7 @@ import {
   useAdminSignUpOtpVerifyMutation,
   useCreateAdminAccountMutation,
   useRedirectAdminAccountMutation,
+  useResendOtpMutation,
 } from "../../services/auth";
 import { useToast } from "../../hooks/useToast";
 
@@ -250,6 +251,7 @@ const AdminSignupScreen = () => {
     useCreateAdminAccountMutation();
   const [redirectAdminAccount, { isLoading: redirectAdminAccountLoading }] =
     useRedirectAdminAccountMutation();
+  const [resendOtp, { isLoading: resendOtpLoading }] = useResendOtpMutation();
 
   const handleCheckSteps = (refId: string) => {
     const payload = {
@@ -405,12 +407,29 @@ const AdminSignupScreen = () => {
   };
 
   const handleResendCode = () => {
+    const refId = JSON.parse(localStorage.getItem("refId") as string);
     if (resendAttempts >= MAX_RESEND_ATTEMPTS || resendTimer > 0) return;
-    console.log("Resend OTP for", submittedEmail);
-    setOtpDigits(Array(OTP_LENGTH).fill(""));
-    otpInputRefs.current[0]?.focus();
-    setResendAttempts((prev) => prev + 1);
-    setResendTimer(RESEND_TIMER_SECONDS);
+    const payload = {
+      ref: refId,
+      body: {
+        email: submittedEmail,
+      },
+    };
+    resendOtp(payload).then((res: any) => {
+      console.log(res, "res otp");
+      if (res?.data?.type === "success") {
+        showToast(res?.data?.message, "success");
+        return;
+      }
+      if (res?.data?.type === "error") {
+        showToast(res?.data?.message, "error");
+        return;
+      }
+    });
+    // setOtpDigits(Array(OTP_LENGTH).fill(""));
+    // otpInputRefs.current[0]?.focus();
+    // setResendAttempts((prev) => prev + 1);
+    // setResendTimer(RESEND_TIMER_SECONDS);
   };
 
   const onPersonalInfoSubmit = (values: PersonalInfoFormValues) => {
@@ -1094,7 +1113,12 @@ const AdminSignupScreen = () => {
                   },
                 }}
               >
-                {resendHelperText}
+                {resendOtpLoading ? (
+                  <CircularProgress size={20} />
+                ) : (
+                  `$
+                  { resendHelperText } `
+                )}
               </Button>
             </Box>
 

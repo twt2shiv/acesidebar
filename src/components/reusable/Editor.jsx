@@ -85,7 +85,7 @@ const StackEditor = ({
     onCloseReply,
     signatureValue,
     isValues,
-    customHeight = "calc(100vh - 342px)",
+    customHeight = "calc(100vh - 368px)",
     handleChangeValue,
     selectedValue,
     changeNotify = () => {},
@@ -977,12 +977,12 @@ const StackEditor = ({
   const baseEditorHeight = React.useMemo(() => {
     if (selectedIndex === "2") {
       return selectedValue === "public"
-        ? "calc(100vh - 314px)"
-        : "calc(100vh - 350px)";
+        ? "calc(100vh - 340px)"
+        : "calc(100vh - 377px)";
     }
 
     if (selectedIndex === "4") {
-      return "calc(100vh - 346px)";
+      return "calc(100vh - 370px)";
     }
 
     return customHeight;
@@ -994,19 +994,19 @@ const StackEditor = ({
     }
 
     if (isEditorExpended) {
-      return "450px";
+      return "480px";
     }
 
     if ((showCc || showBcc) && currentSignature) {
-      return "calc(100vh - 552px)";
+      return "calc(100vh - 576.5px)";
     }
 
     if (showCc || showBcc) {
-      return "calc(100vh - 378px)";
+      return "calc(100vh - 401px)";
     }
 
     if (currentSignature) {
-      return "calc(100vh - 513px)";
+      return "calc(100vh - 540px)";
     }
 
     return baseEditorHeight;

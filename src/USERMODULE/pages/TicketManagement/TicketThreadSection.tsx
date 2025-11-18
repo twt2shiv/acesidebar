@@ -155,7 +155,7 @@ const ThreadItem = ({
   const [isReported, setIsReported] = useState<boolean>(item?.isFlagged);
   const [isHovered, setIsHovered] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const isOpen = openOptionsId === item.entryId;
+  const [isModalOpen2, setIsModalOpen2] = useState<boolean>(false);
 
   const ticketId = useParams().id;
   const optionsRef = React.useRef<any>(null);
@@ -274,8 +274,16 @@ const ThreadItem = ({
       showToast("Failed to download file", "error");
     }
   };
+   const handleClose = (event: any) => {
+    if (optionsRef.current && optionsRef.current.contains(event.target)) {
+      return;
+    }
+
+    setIsModalOpen2(false);
+  };
 
   const renderReplyOption = (
+      <ClickAwayListener onClickAway={handleClose}>
     <Box
       sx={{
         display: "flex",
@@ -299,48 +307,52 @@ const ThreadItem = ({
         },
       }}
     >
-      {replyOptions.map((option, index) => {
-        return (
-          <IconButton
-            key={index}
-            onClick={() => {
-              handleSelect(option.value);
-            }}
-            size="small"
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 0.5,
-              padding: "8px 12px",
-              borderRadius: "6px",
-              backgroundColor: "transparent",
-              color: "#666",
-              transition: "all 0.2s ease",
-              minWidth: "60px",
-              "&:hover": {
-                backgroundColor: "#f5f5f5",
-                color: "#2566b0",
-                transform: "translateY(-1px)",
-              },
-            }}
-          >
-            {option.icon}
-            <Typography
-              variant="caption"
+    
+     
+        {replyOptions.map((option, index) => {
+          return (
+            <IconButton
+              key={index}
+              onClick={() => {
+                handleSelect(option.value);
+              }}
+              size="small"
               sx={{
-                fontSize: "10px",
-                fontWeight: 500,
-                textAlign: "center",
-                lineHeight: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 0.5,
+                padding: "8px 12px",
+                borderRadius: "6px",
+                backgroundColor: "transparent",
+                color: "#666",
+                transition: "all 0.2s ease",
+                minWidth: "60px",
+                "&:hover": {
+                  backgroundColor: "#f5f5f5",
+                  color: "#2566b0",
+                  transform: "translateY(-1px)",
+                },
               }}
             >
-              {option.name}
-            </Typography>
-          </IconButton>
-        );
-      })}
+              {option.icon}
+              <Typography
+                variant="caption"
+                sx={{
+                  fontSize: "10px",
+                  fontWeight: 500,
+                  textAlign: "center",
+                  lineHeight: 1,
+                }}
+              >
+                {option.name}
+              </Typography>
+            </IconButton>
+          );
+        })}
+   
     </Box>
+       </ClickAwayListener>
   );
   //@ts-ignore
   const isCurrentUser = item?.replyType === "AGENT";
@@ -365,6 +377,8 @@ const ThreadItem = ({
       return encoded ?? "";
     }
   };
+
+ 
 
   const sanitizeMessageHtml = (html: string) => {
     if (!html) return "";
@@ -399,8 +413,6 @@ const ThreadItem = ({
       })
       .catch((error) => {});
   };
-
- 
 
   return (
     <div className={`w-full flex p-2 overflow-auto ${marginBottomClass}`}>
@@ -540,20 +552,19 @@ const ThreadItem = ({
                           )}
                           <CustomToolTip
                             title={renderReplyOption}
-                            open={isOpen}
-                            placement={"bottom-end"}
+                            open={isModalOpen2}
+                            // close={() => setIsModalOpen2(false)}
+                            // open={isOpen}
+
+                            placement={"bottom"}
                           >
                             <IconButton
-                              size="small"
-                              onClick={() =>
-                                onToggleOptions(isOpen ? null : item.entryId)
-                              }
                               ref={optionsRef}
+                              size="small"
+                              onClick={() => setIsModalOpen2(true)}
                               sx={{
-                                color: isOpen ? "#2566b0" : "#666",
-                                backgroundColor: isOpen
-                                  ? "#e3f2fd"
-                                  : "transparent",
+                                color: "#666",
+                                backgroundColor: "transparent",
                                 "&:hover": {
                                   backgroundColor: "#f5f5f5",
                                   color: "#2566b0",
@@ -563,7 +574,7 @@ const ThreadItem = ({
                               <ArrowDropDownIcon
                                 fontSize="small"
                                 sx={{
-                                  transform: isOpen
+                                  transform: isModalOpen2
                                     ? "rotate(180deg)"
                                     : "rotate(0deg)",
                                   transition: "transform 0.2s ease",

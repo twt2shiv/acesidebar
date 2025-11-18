@@ -17,7 +17,7 @@ import ClickAwayListener from "@mui/material/ClickAwayListener";
 import ForwardPanel from "./ForwardPanel";
 import { useCommanApiMutation } from "../../../services/threadsApi";
 import { useGetTicketDetailStaffViewQuery } from "../../../services/ticketDetailAuth";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import TicketDetailSkeleton from "../../skeleton/TicketDetailSkeleton";
 import { useAuth } from "../../../contextApi/AuthContext";
 import {
@@ -61,6 +61,7 @@ const TicketDetailTemplate = () => {
     page: 1,
     limit: 100,
   });
+   const location = useLocation();
 
   const ticketIds: string[] = Array.isArray(ticketListData?.data)
     ? ticketListData.data
@@ -303,7 +304,7 @@ const TicketDetailTemplate = () => {
           display: "flex",
           position: "relative",
           overflow: "hidden",
-          height: "calc(100vh - 98px)",
+          height:   location.pathname === "/tickets" ||location.pathname.startsWith("/tickets/") ? "calc(100vh - 125px)" : "calc(100vh - 98px)",
         }}
       >
         <Sidebar open={false} handleDrawerToggle={() => {}} />
@@ -327,11 +328,13 @@ const TicketDetailTemplate = () => {
           />
         </div>
         <div
-          className="w-full grid"
+         
           style={{
+            display: "grid",
             gridTemplateColumns: isCustomerInfoVisible
               ? "1fr 2fr 1fr auto"
               : "1fr 3fr auto",
+            transition :  "gridTemplateColumns 0.1s ease-in-out", 
           }}
         >
           <div
@@ -362,10 +365,10 @@ const TicketDetailTemplate = () => {
             )}
           </div>
           {isCustomerInfoVisible && (
-            <AnimatePresence mode="wait">
+            <AnimatePresence >
               <div
                 id="ticket-customer-info"
-                className="w-full h-[calc(100vh-215px)]  overflow-y-auto overflow-x-hidden p-2.5 transition-all duration-300 ease-in-out translate-x-0 opacity-100 custom-scrollbar"
+                className="w-full h-[calc(100vh-240px)]  overflow-y-auto overflow-x-hidden p-2.5 transition-all duration-300 ease-in-out translate-x-0 opacity-100 custom-scrollbar"
               >
                 {customerInfoContent === "customer" ? (
                   <motion.div
@@ -373,7 +376,7 @@ const TicketDetailTemplate = () => {
                     initial={{ x: "100%", opacity: 0.5 }} // start off-screen to the right
                     animate={{ x: 0, opacity: 1 }} // animate into place
                     exit={{ x: "100%", opacity: 0 }} // animate out when hidden
-                    transition={{ duration: 0.2, ease: "easeInOut" }}
+                    transition={{ duration: 0.1, ease: "easeInOut" }}
                   >
                     {/* Customer Information Section */}
                     <CustomerInfoSection
@@ -611,7 +614,7 @@ const TicketDetailTemplate = () => {
             id="ticket-icons-section"
             style={{
               width: "100%",
-              height: "75%",
+              height: "calc(100vh - 240px)",
               display: "flex",
               flexDirection: "column",
               justifyContent: "space-between",

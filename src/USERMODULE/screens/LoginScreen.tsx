@@ -46,8 +46,7 @@ const LoginScreen = () => {
   const NEUTRAL_BORDER = "#d9d9d9";
   const { signIn } = useAuth();
   const navigation = useNavigate();
-  const VISIBLE_RECAPTCHA_KEY =
-    process.env.REACT_APP_GOOGLE_VISIBLE_SITE_KEY;
+  const VISIBLE_RECAPTCHA_KEY = process.env.REACT_APP_GOOGLE_VISIBLE_SITE_KEY;
   const {
     register,
     handleSubmit,
@@ -101,7 +100,6 @@ const LoginScreen = () => {
     } else {
       setShowLoginForm(true); // show step 2 (login) for non-tms hosts (incl. localhost)
       setIsStep2Loading(true);
-
     }
     setHostLoading(false);
   }, []);
@@ -148,8 +146,8 @@ const LoginScreen = () => {
             const apexDomain = isLocalLike
               ? "localhost"
               : parts.length > 2
-                ? parts.slice(-2).join(".")
-                : host;
+              ? parts.slice(-2).join(".")
+              : host;
             const targetHost = isLocalLike
               ? `tms.${apexDomain}${port ? `:${port}` : ""}`
               : `tms.${apexDomain}`;
@@ -163,8 +161,8 @@ const LoginScreen = () => {
           const apexDomain = isLocalLike
             ? "localhost"
             : parts.length > 2
-              ? parts.slice(-2).join(".")
-              : host;
+            ? parts.slice(-2).join(".")
+            : host;
           const targetHost = isLocalLike
             ? `tms.${apexDomain}${port ? `:${port}` : ""}`
             : `tms.${apexDomain}`;
@@ -484,7 +482,6 @@ const LoginScreen = () => {
     await executeLogin(data, captchaToken);
   });
 
-
   const onForgotSubmit = async ({ email }: { email: string }) => {
     if (!isForgotCaptchaVerified || !forgotCaptchaToken) {
       showToast("Please complete the security verification", "error");
@@ -536,8 +533,10 @@ const LoginScreen = () => {
       ? "Enter your email address and we'll send instructions to reset your password."
       : "Enter your email address and we'll send your workspace username."
     : isStep1
-      ? "Enter your workspace domain to reach your team's ticket portal."
-      : `Welcome back to the ${brandName || "Ajaxter"} support workspace. Sign in to pick up your tickets, tasks, and chats.`;
+    ? "Enter your workspace domain to reach your team's ticket portal."
+    : `Welcome back to the ${
+        brandName || "Ajaxter"
+      } support workspace. Sign in to pick up your tickets, tasks, and chats.`;
 
   if (hostLoading) {
     return (
@@ -587,33 +586,35 @@ const LoginScreen = () => {
           }}
         >
           <Box sx={{ width: "100%", maxWidth: 420 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5,
-                mb: 6,
-              }}
-            >
+            {!isStep2Loading && (
               <Box
                 sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: "50%",
-                  backgroundColor: PRIMARY_COLOR,
-                }}
-              />
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 700,
-                  letterSpacing: 1,
-                  color: "#1a1a1a",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  mb: 6,
                 }}
               >
-                {(brandName || "Ajaxter").toUpperCase()} SUPPORT
-              </Typography>
-            </Box>
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    backgroundColor: PRIMARY_COLOR,
+                  }}
+                />
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    letterSpacing: 1,
+                    color: "#1a1a1a",
+                  }}
+                >
+                  {(brandName || "Ajaxter").toUpperCase()} SUPPORT
+                </Typography>
+              </Box>
+            )}
             {!showLoginForm && (
               <>
                 <Typography
@@ -665,7 +666,7 @@ const LoginScreen = () => {
                     onBlur={() => setCompanyNameTouched(true)}
                     error={
                       (companyNameSubmitted || companyNameTouched) &&
-                        !companyName.trim()
+                      !companyName.trim()
                         ? true
                         : false
                     }
@@ -679,7 +680,7 @@ const LoginScreen = () => {
                             sx={{
                               color:
                                 (companyNameSubmitted || companyNameTouched) &&
-                                  !companyName.trim()
+                                !companyName.trim()
                                   ? "#d32f2f"
                                   : PRIMARY_COLOR,
                             }}
@@ -843,6 +844,7 @@ const LoginScreen = () => {
                         fontWeight: 600,
                         "&:hover": { textDecoration: "underline" },
                       }}
+                      onClick={() => navigation("/signup")}
                     >
                       Create a Account
                     </Link>
@@ -911,7 +913,9 @@ const LoginScreen = () => {
                       {process.env.REACT_APP_GOOGLE_VISIBLE_SITE_KEY ? (
                         <GoogleRecaptcha
                           ref={forgotRecaptchaRef}
-                          siteKey={process.env.REACT_APP_GOOGLE_VISIBLE_SITE_KEY}
+                          siteKey={
+                            process.env.REACT_APP_GOOGLE_VISIBLE_SITE_KEY
+                          }
                           onVerify={handleForgotRecaptchaVerify}
                           onError={handleForgotRecaptchaError}
                           onExpire={handleForgotRecaptchaExpire}
@@ -981,7 +985,11 @@ const LoginScreen = () => {
                     </Box>
                   </Box>
                 ) : (
-                  <Box component="form" onSubmit={handleLoginAttempt} noValidate>
+                  <Box
+                    component="form"
+                    onSubmit={handleLoginAttempt}
+                    noValidate
+                  >
                     <TextField
                       {...register("email")}
                       fullWidth
@@ -1117,7 +1125,26 @@ const LoginScreen = () => {
                           variant="body2"
                           sx={{ fontSize: "14px", color: "#1a1a1a" }}
                         >
-                          I agree to the{" "} <Link href="#" target="_blank" underline="none" rel="noopener noreferrer" sx={{ "&:hover": { textDecoration: "underline" } }}>Terms of Service</Link> and <Link href="#" target="_blank" underline="none" rel="noopener noreferrer" sx={{ "&:hover": { textDecoration: "underline" } }}>Privacy Policy</Link>
+                          I agree to the{" "}
+                          <Link
+                            href="#"
+                            target="_blank"
+                            underline="none"
+                            rel="noopener noreferrer"
+                            sx={{ "&:hover": { textDecoration: "underline" } }}
+                          >
+                            Terms of Service
+                          </Link>{" "}
+                          and{" "}
+                          <Link
+                            href="#"
+                            target="_blank"
+                            underline="none"
+                            rel="noopener noreferrer"
+                            sx={{ "&:hover": { textDecoration: "underline" } }}
+                          >
+                            Privacy Policy
+                          </Link>
                         </Typography>
                       }
                     />
@@ -1271,7 +1298,9 @@ const LoginScreen = () => {
                 lineHeight: 1.6,
               }}
             >
-              Triage tickets, coordinate follow-up tasks, and stay in sync with live chat threads in one secure workspace. Keep every conversation, SLA, and customer request on track.
+              Triage tickets, coordinate follow-up tasks, and stay in sync with
+              live chat threads in one secure workspace. Keep every
+              conversation, SLA, and customer request on track.
             </Typography>
           </Box>
         </Box>
@@ -1296,7 +1325,7 @@ const LoginScreen = () => {
             flexWrap: "wrap",
             justifyContent: "center",
             gap: { xs: 1, md: 2 },
-            mb: 2
+            mb: 2,
           }}
         >
           {[
@@ -1342,10 +1371,14 @@ const LoginScreen = () => {
             textAlign: "center",
             color: "#666",
             fontSize: "12px",
-            fontWeight: 600
+            fontWeight: 600,
           }}
         >
-          © Copyright {new Date().getFullYear() === 2025 ? "2025" : `2025 - ${new Date().getFullYear()}`} Ajaxter. All rights reserved.
+          © Copyright{" "}
+          {new Date().getFullYear() === 2025
+            ? "2025"
+            : `2025 - ${new Date().getFullYear()}`}{" "}
+          Ajaxter. All rights reserved.
         </Typography>
         <Typography
           variant="body2"
@@ -1354,7 +1387,7 @@ const LoginScreen = () => {
             color: "#666",
             fontSize: "12px",
             fontWeight: 600,
-            mt: 0.5
+            mt: 0.5,
           }}
         >
           All registered trademarks herein are the property of their respective

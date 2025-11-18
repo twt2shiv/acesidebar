@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useTicketsLayout } from "../../../contextApi/TicketsLayoutContext";
 import CloseIcon from "@mui/icons-material/Close";
 import "./TicketTabsBar.css";
@@ -7,17 +7,18 @@ import "./TicketTabsBar.css";
 const TicketTabsBar: React.FC = () => {
   const {
     ticketTabs,
-    activeTicketTab,
-    setActiveTicketTab,
+
     removeTicketTab,
   } = useTicketsLayout();
   const navigate = useNavigate();
+  const location = useLocation();
+const activeTicketTab = location.pathname.replace("/tickets/", "");
 
   if (!ticketTabs.length) return null;
 
   const handleTabClick = (ticketNumber: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setActiveTicketTab(ticketNumber);
+    // setActiveTicketTab(ticketNumber);
     navigate(`/tickets/${ticketNumber}`);
   };
 
@@ -37,7 +38,7 @@ const TicketTabsBar: React.FC = () => {
   };
 
   return (
-    <div className="ticket-tabs-wrapper">
+    <div  className="ticket-tabs-wrapper">
       <ul className="ticket-tabs">
         {ticketTabs.map((tab) => {
           const isActive = tab.ticketNumber === activeTicketTab;
@@ -48,8 +49,8 @@ const TicketTabsBar: React.FC = () => {
               className={tabClass}
               onClick={(e) => handleTabClick(tab.ticketNumber, e)}
               role="tab"
-              aria-selected={isActive}
-              tabIndex={0}
+              // aria-selected={isActive}
+              // tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
