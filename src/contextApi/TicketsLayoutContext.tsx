@@ -90,15 +90,10 @@ export const TicketsLayoutProvider: React.FC<{ children: ReactNode }> = ({ child
 
   const removeTicketTab = useCallback((ticketNumber: string) => {
     setTicketTabs((prev) => {
-      const filtered = prev.filter((tab) => tab.ticketNumber !== ticketNumber);
-      setActiveTicketTab((current) => {
-        if (current === ticketNumber) {
-          return filtered[filtered.length - 1]?.ticketNumber ?? null;
-        }
-        return current;
-      });
-      return filtered;
+      return prev.filter((tab) => tab.ticketNumber !== ticketNumber);
     });
+    // Don't update activeTicketTab here - let the component handle navigation
+    // This prevents race conditions and lag
   }, []);
 
   const updateTicketTab = useCallback(

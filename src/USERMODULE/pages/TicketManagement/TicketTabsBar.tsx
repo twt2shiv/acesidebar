@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTicketsLayout } from "../../../contextApi/TicketsLayoutContext";
 import CloseIcon from "@mui/icons-material/Close";
@@ -12,30 +12,59 @@ const TicketTabsBar: React.FC = () => {
   } = useTicketsLayout();
   const navigate = useNavigate();
   const location = useLocation();
-const activeTicketTab = location.pathname.replace("/tickets/", "");
+  const activeTicketTab = useMemo(
+    () => location.pathname.replace("/tickets/", ""),
+    [location.pathname]
+  );
+
+  const handleTabClick = useCallback(
+    (ticketNumber: string, e?: React.MouseEvent) => {
+      e?.stopPropagation();
+      navigate(`/tickets/${ticketNumber}`);
+    },
+    [navigate]
+  );
+
+  const handleCloseTab = useCallback(
+    (ticketNumber: string, e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      e.preventDefault();
+
+      // Find the index of the tab being closed
+      const closedTabIndex = ticketTabs.findIndex(
+        (tab) => tab.ticketNumber === ticketNumber
+      );
+
+      // Calculate which tab to navigate to before removing
+      let targetTab: string | null = null;
+      const isActiveTab = ticketNumber === activeTicketTab;
+
+      if (isActiveTab) {
+        if (ticketTabs.length === 1) {
+          // Last tab, navigate to tickets list - targetTab stays null
+        } else if (closedTabIndex === ticketTabs.length - 1) {
+          // Closing the last tab, select the previous one
+          targetTab = ticketTabs[closedTabIndex - 1]?.ticketNumber || null;
+        } else {
+          // Closing a tab in the middle, select the next one (same index)
+          targetTab = ticketTabs[closedTabIndex + 1]?.ticketNumber || null;
+        }
+      }
+
+      // Navigate first to avoid lag
+      if (targetTab !== null) {
+        navigate(`/tickets/${targetTab}`);
+      } else if (isActiveTab) {
+        navigate("/tickets");
+      }
+
+      // Remove the tab after navigation
+      removeTicketTab(ticketNumber);
+    },
+    [ticketTabs, activeTicketTab, navigate, removeTicketTab]
+  );
 
   if (!ticketTabs.length) return null;
-
-  const handleTabClick = (ticketNumber: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    // setActiveTicketTab(ticketNumber);
-    navigate(`/tickets/${ticketNumber}`);
-  };
-
-  const handleCloseTab = (
-    ticketNumber: string,
-    e: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    e.stopPropagation();
-    const remaining = ticketTabs.filter(
-      (tab) => tab.ticketNumber !== ticketNumber
-    );
-    removeTicketTab(ticketNumber);
-    if (ticketNumber === activeTicketTab) {
-      const next = remaining[remaining.length - 1];
-      navigate(next ? `/tickets/${next.ticketNumber}` : "/tickets");
-    }
-  };
 
   return (
     <div  className="ticket-tabs-wrapper">
