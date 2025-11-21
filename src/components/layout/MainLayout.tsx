@@ -10,7 +10,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { usePopupContext } from "../../contextApi/PopupContext";
 import { useStatus } from "../../contextApi/StatusContext";
 import { useHelpCenter } from "../../contextApi/HelpCenterContext";
-import logo from "../../assets/image/ajaxter-logo.webp";
+import logo from "../../assets/image/logo.svg";
 import PrivateTurnstile from "../common/PrivateTurnstile";
 import OfflineStatusModal from "../popup/OfflineStatusModal";
 import HelpCenterSlider from "./HelpCenterSlider";

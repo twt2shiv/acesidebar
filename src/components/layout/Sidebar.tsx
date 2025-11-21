@@ -12,6 +12,7 @@ import AddTaskIcon from "@mui/icons-material/AddTask";
 import { useHelpCenter } from "../../contextApi/HelpCenterContext";
 import AllInboxIcon from "@mui/icons-material/AllInbox";
 import setupWizardIcon from "../../assets/image/setup-wizard.svg";
+import logo from "../../assets/image/logo.svg";
 const SIDEBAR_WIDTH = 80;
 const SIDEBAR_COLLAPSED_WIDTH = 0;
 
@@ -105,15 +106,15 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
               justifyContent: "center",
               alignItems: "center",
               width: "100%",
-              mb: 2,
+              // mb: 2,
             }}
           >
             <img
-              src="https://ims.mscorpres.co.in/assets/images/mscorpres_auto_logo.png"
+              src={logo}
               alt="MS Corp"
               style={{
-                width: 48,
-                height: "auto",
+                width: "80px",
+                height: "80px",
                 objectFit: "contain",
               }}
             />

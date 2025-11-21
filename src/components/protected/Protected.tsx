@@ -1,7 +1,7 @@
 import { LinearProgress } from "@mui/material";
 import React, { useEffect, useState, useCallback, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import logo from "../../assets/image/ajaxter-logo.webp";
+import logo from "../../assets/image/ajaxter-logo.svg";
 import { decrypt } from "../../utils/encryption";
 import { sessionManager } from "../../utils/SessionManager";
 import GlobalBackButtonPrevention from "../GlobalBackButtonPrevention";
