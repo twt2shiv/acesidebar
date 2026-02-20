@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Box, Grow, Zoom } from "@mui/material";
+import { Box, Grow, Skeleton, Zoom } from "@mui/material";
 import { Apps, AddTask, More } from "@mui/icons-material";
 import CustomSideBarPanel from "../../../components/reusable/CustomSideBarPanel";
 import Tasks from "../task/Tasks";
@@ -341,7 +341,18 @@ const TicketDetailTemplate = () => {
             id="ticket-properties-sidebar"
             style={{ width: "100%", height: "100%", overflow: "hidden" }}
           >
-            <TicketPropertiesSidebar ticket={displayHeader} />
+            {isTicketDetailLoading || !ticket ? (
+              <Box className="flex flex-col w-full h-full p-2" sx={{ gap: 1 }}>
+                <Skeleton variant="rounded" width="100%" height={36} />
+                <Skeleton variant="rounded" width="90%" height={24} />
+                <Skeleton variant="rounded" width="70%" height={24} />
+                <Skeleton variant="rounded" width="100%" height={80} />
+                <Skeleton variant="rounded" width="100%" height={40} />
+                <Skeleton variant="rounded" width="60%" height={32} />
+              </Box>
+            ) : (
+              <TicketPropertiesSidebar ticket={displayHeader} />
+            )}
             {/* Forward Panel positioned inside the left column */}
           </div>
           <div

@@ -7,6 +7,8 @@
   top: 60px;
   z-index: 30;
   overflow: hidden;
+  display: flex;
+  width: 100%;
 }
 
 .ticket-tabs {
@@ -21,6 +23,8 @@
   padding-right: 20px;
   width: 100%;
   gap: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 .ticket-tabs::-webkit-scrollbar {
@@ -45,16 +49,15 @@
   background: #d0d8dd;
   position: relative;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
-  width: 200px;
-  max-width: 200px;
-  min-width: 150px;
+  flex: 1 1 0;
+  min-width: 80px;
+  max-width: 220px;
   border: 1px solid #e0e0e0;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   overflow: visible;
-  flex-shrink: 0;
 }
 
 .ticket-tab:first-child {
@@ -192,9 +195,8 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .ticket-tab {
-    width: 150px;
+    min-width: 60px;
     max-width: 150px;
-    min-width: 120px;
     padding: 0 25px 0 20px;
   }
   
