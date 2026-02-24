@@ -325,6 +325,7 @@ const TicketDetailTemplate = () => {
             onNextTicket={handleNextTicket}
             hasPreviousTicket={hasPreviousTicket}
             hasNextTicket={hasNextTicket}
+            isTicketLoading={isTicketDetailLoading}
           />
         </div>
         <div

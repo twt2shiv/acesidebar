@@ -36,6 +36,7 @@ import {
   Autocomplete,
   Drawer,
   CircularProgress,
+  Skeleton,
 } from "@mui/material";
 import ConfirmationModal from "../../../components/reusable/ConfirmationModal";
 import { Button } from "@mui/material";
@@ -126,6 +127,7 @@ const TicketDetailHeader = ({
   onNextTicket,
   hasPreviousTicket = true,
   hasNextTicket = true,
+  isTicketLoading = false,
 }: any) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
   const [triggerDeleteWatcher, { isLoading: isDeletingLoading }] =
@@ -325,143 +327,166 @@ const TicketDetailHeader = ({
           <ArrowBackIcon fontSize="small" />
         </IconButton>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          <span className="text-[#2566b0] font-semibold text-md">
-            {ticket?.ticketId && ticket?.ticketId}
-          </span>
-          <Tooltip title="Copy ticket number" arrow>
-            <IconButton
-              size="small"
-              onClick={() => {
-                if (ticket?.ticketId) {
-                  navigator.clipboard.writeText(ticket.ticketId);
-                  showToast("Ticket number copied to clipboard", "success");
-                }
-              }}
-              sx={{
-                width: 20,
-                height: 20,
-                padding: 0.5,
-                "&:hover": { bgcolor: "rgba(26, 115, 232, 0.08)" },
-              }}
-            >
-              <ContentCopyIcon sx={{ fontSize: 14, color: "#2566b0" }} />
-            </IconButton>
-          </Tooltip>
+          {isTicketLoading ? (
+            <Skeleton variant="text" width={80} height={24} sx={{ fontSize: "1rem" }} />
+          ) : (
+            <>
+              <span className="text-[#2566b0] font-semibold text-md">
+                {ticket?.ticketId && ticket?.ticketId}
+              </span>
+              <Tooltip title="Copy ticket number" arrow>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    if (ticket?.ticketId) {
+                      navigator.clipboard.writeText(ticket.ticketId);
+                      showToast("Ticket number copied to clipboard", "success");
+                    }
+                  }}
+                  sx={{
+                    width: 20,
+                    height: 20,
+                    padding: 0.5,
+                    "&:hover": { bgcolor: "rgba(26, 115, 232, 0.08)" },
+                  }}
+                >
+                  <ContentCopyIcon sx={{ fontSize: 14, color: "#2566b0" }} />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
         </Box>
       </nav>
 
       {/* Action buttons */}
-      <div className="flex gap-2 ml-auto mr-10">
-        <ActionButton
-          icon={<ReplyIcon fontSize="small" className="text-blue-600" />}
-          tooltip="Post Reply"
-          onClick={onReply}
-        />
-        <ActionButton
-          icon={<NoteAddIcon fontSize="small" className="text-green-600" />}
-          tooltip="Add Note"
-          onClick={onNote}
-        />
+      <div className="flex gap-2 ml-auto mr-10 items-center">
+        {isTicketLoading ? (
+          <Box sx={{ display: "flex", gap: 1 }}>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Skeleton key={i} variant="rounded" width={40} height={32} />
+            ))}
+          </Box>
+        ) : (
+          <>
+            <ActionButton
+              icon={<ReplyIcon fontSize="small" className="text-blue-600" />}
+              tooltip="Post Reply"
+              onClick={onReply}
+            />
+            <ActionButton
+              icon={<NoteAddIcon fontSize="small" className="text-green-600" />}
+              tooltip="Add Note"
+              onClick={onNote}
+            />
 
-        <ActionButton
-          icon={<SwapHorizIcon fontSize="small" className="text-purple-600" />}
-          tooltip="Forward"
-          onClick={() => onForward()}
-        />
-        <ActionButton
-          onClick={() => setIsMergeModal(true)}
-          icon={<MergeTypeIcon fontSize="small" className="text-purple-600" />}
-          tooltip="Merge"
-        />
-        <Mergeticket
-          open={isMergeModal}
-          initialPrimary={{
-            id: "T-1001",
-            title: "Unable to login to portal",
-            group: "Support",
-            agent: "John Doe",
-            closedAgo: "2 days ago",
-            resolvedOnTime: true,
-            isPrimary: true, // this is your main ticket
-          }}
-          onClose={() => setIsMergeModal(false)}
-        />
-        <ActionButton
-          icon={<DeleteIcon fontSize="small" className="text-red-600" />}
-          tooltip="Delete"
-          onClick={() => setIsDeleteModalOpen(true)}
-        />
-
-
+            <ActionButton
+              icon={<SwapHorizIcon fontSize="small" className="text-purple-600" />}
+              tooltip="Forward"
+              onClick={() => onForward()}
+            />
+            <ActionButton
+              onClick={() => setIsMergeModal(true)}
+              icon={<MergeTypeIcon fontSize="small" className="text-purple-600" />}
+              tooltip="Merge"
+            />
+            <Mergeticket
+              open={isMergeModal}
+              initialPrimary={{
+                id: "T-1001",
+                title: "Unable to login to portal",
+                group: "Support",
+                agent: "John Doe",
+                closedAgo: "2 days ago",
+                resolvedOnTime: true,
+                isPrimary: true, // this is your main ticket
+              }}
+              onClose={() => setIsMergeModal(false)}
+            />
+            <ActionButton
+              icon={<DeleteIcon fontSize="small" className="text-red-600" />}
+              tooltip="Delete"
+              onClick={() => setIsDeleteModalOpen(true)}
+            />
+          </>
+        )}
       </div>
 
       {/* Navigation buttons - Right side */}
 
       <div className="flex gap-8  items-center">
         {watcherStatusLoading && <CircularProgress size={15} />}
-        <div className="space-x-2">
-          <Tooltip
-            title={watcherEnabled ? "Disable Watchers" : "Enable Watchers"}
-            placement="right"
-          >
-            <Switch
-              checked={watcherEnabled}
-              onChange={handleWatcherToggle}
-              size="small"
-              sx={{
-                "& .MuiSwitch-switchBase.Mui-checked": {
-                  color: "#2566b0",
-                  "& + .MuiSwitch-track": {
-                    backgroundColor: "#2566b0",
-                  },
-                },
-                "& .MuiSwitch-track": {
-                  backgroundColor: "#d1d5db",
-                },
-              }}
-            />
-          </Tooltip>
-          <Tooltip
-            title={
-              <Box className="p-2 rounded-md text-black">
-                <Typography
-                  variant="body2"
-                  sx={{ fontWeight: "bold", mb: 0.5 }}
-                >
-                  Ticket watchers ({watcherData?.length})
-                </Typography>
-                <Typography variant="caption" sx={{ display: "block", mb: 1 }}>
-                  Agents added as watchers will receive alerts when this ticket
-                  is updated
-                </Typography>
-              </Box>
-            }
-            placement="bottom"
-            componentsProps={{
-              tooltip: {
-                sx: {
-                  backgroundColor: "white",
-                  color: "black",
-                  boxShadow: 3,
-                  border: "1px solid #e0e0e0",
-                },
-              },
-            }}
-          >
-            {watcherEnabled ? (
-              <IconButton
-                onClick={handleWatchersClick}
-                size="small"
-                className="text-blue-600 hover:bg-blue-50 hover:text-blue-600"
+        <div className="space-x-2 flex items-center">
+          {isTicketLoading ? (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Skeleton variant="rounded" width={44} height={24} />
+              <Skeleton variant="rounded" width={32} height={32} />
+            </Box>
+          ) : (
+            <>
+              <Tooltip
+                title={watcherEnabled ? "Disable Watchers" : "Enable Watchers"}
+                placement="right"
               >
-                <VisibilityIcon fontSize="small" />
-              </IconButton>
-            ) : (
-              <IconButton disabled size="small" disableRipple>
-                <VisibilityOffIcon fontSize="small" />
-              </IconButton>
-            )}
-          </Tooltip>
+                <Switch
+                  checked={watcherEnabled}
+                  onChange={handleWatcherToggle}
+                  size="small"
+                  sx={{
+                    "& .MuiSwitch-switchBase.Mui-checked": {
+                      color: "#2566b0",
+                      "& + .MuiSwitch-track": {
+                        backgroundColor: "#2566b0",
+                      },
+                    },
+                    "& .MuiSwitch-track": {
+                      backgroundColor: "#d1d5db",
+                    },
+                  }}
+                />
+              </Tooltip>
+              <Tooltip
+                title={
+                  <Box className="p-2 rounded-md text-black">
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: "bold", mb: 0.5 }}
+                    >
+                      Ticket watchers ({watcherData?.length})
+                    </Typography>
+                    <Typography variant="caption" sx={{ display: "block", mb: 1 }}>
+                      Agents added as watchers will receive alerts when this ticket
+                      is updated
+                    </Typography>
+                  </Box>
+                }
+                placement="bottom"
+                componentsProps={{
+                  tooltip: {
+                    sx: {
+                      backgroundColor: "white",
+                      color: "black",
+                      boxShadow: 3,
+                      border: "1px solid #e0e0e0",
+                    },
+                  },
+                }}
+              >
+                {watcherEnabled ? (
+                  <IconButton
+                    onClick={handleWatchersClick}
+                    size="small"
+                    className="text-blue-600 hover:bg-blue-50 hover:text-blue-600"
+                  >
+                    <VisibilityIcon fontSize="small" />
+                  </IconButton>
+                ) : (
+                  <IconButton disabled size="small" disableRipple>
+                    <VisibilityOffIcon fontSize="small" />
+                  </IconButton>
+                )}
+              </Tooltip>
+            </>
+          )}
         </div>
         {/* Previous Ticket Button */}
         <IconButton
