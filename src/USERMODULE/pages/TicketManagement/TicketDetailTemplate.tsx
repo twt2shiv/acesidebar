@@ -7,7 +7,7 @@ import Sidebar from "../../../components/layout/Sidebar";
 import TicketDetailHeader from "./TicketDetailHeader";
 import TicketThreadSection from "./TicketThreadSection";
 import TicketPropertiesSidebar from "./TicketPropertiesSidebar";
-import CustomerInfoSection from "./CustomerInfoSection";
+import CustomerInfoSection from "./CustomerInfoSection"; 
 import InteractionHistorySection from "./InteractionHistorySection";
 import IconsSection from "./IconsSection";
 import InfoTab from "./InfoTab";
